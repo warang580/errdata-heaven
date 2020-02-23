@@ -85,3 +85,10 @@ define(["require"] , function (require) {
 ## API
 
 @TODO: write nice documentation when the code part is done ! (*and then forgets about it and never does it* :eyeroll:)
+
+Use railway image to illustrate (with data on track 1 and err on track 2)
+
+- from
+- bind
+- map
+- tap
