@@ -59,6 +59,7 @@ Updating some customer information via a webservice
 ## Installation
 
 NPM  : `npm install errdata-heaven`
+
 Yarn : `yarn add errdata-heaven`
 
 ## Usage
@@ -90,7 +91,7 @@ define(["require"] , function (require) {
 - `bind`
 - `map`
 - `tap`
-- `promise`  (trasnform promises result to errdata - needs await for now)
+- `promise`  (transform promises result to errdata - needs await for now)
 - `callback` (like promise, but with callbacks as inputs - needs await for now)
 
 @TODO: further explanations
