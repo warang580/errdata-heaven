@@ -1,17 +1,21 @@
-const H = require('./heaven')
+const H = require('../src/heaven')
 const axios = require('axios');
 
 let fetchJson = (url) => axios.get(url, {headers: {"Accept": "application/json"}});
 
 let jokeUrl = "https://icanhazdadjoke.com/";
 
-let getJoke = H.map(req => req.data.joke, H.promise(fetchJson, H.from(jokeUrl)));
+let p = H.promise(fetchJson, H.from(jokeUrl));
 
-console.log("getJoke", getJoke);
+console.log("p", p);
 
-getJoke.then(([err, data]) => {
-   console.log("then", err, data);
-});
+// let getJoke = H.map(req => req.data.joke, [null, null]);
+//
+// console.log("getJoke", getJoke);
+//
+// getJoke.then(([err, data]) => {
+//    console.log("then", err, data);
+// });
 
 // // Works but fugly
 // (async () => {
