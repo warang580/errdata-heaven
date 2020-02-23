@@ -1,17 +1,13 @@
 # Callbacks/Promises heaven with [err,data] all the way
 
-**Disclaimer** : this is just an experiment for the moment, don't **actually** use it ! Not in production, not in dev, nowhere. At the time of this write, there's actually no working code yet, just drafts of the coming-soon API.
-
-Note: If you don't like (my) bad humor, just scan the titles and the examples, that should be enough.
-
-(For branding reasons, I wanted to call this package callback-heaven|heaven but they were already taken :sad:)
+**Disclaimer** : this is just an experiment for the moment, don't **actually** use it ! Definitely not in production, and probably not in dev either.
 
 Avoid callback/promises hell by handling data/errors/callbacks/promises, etc.
-through only [err, data] (what I smartly call errdata) and work on that with an API (that is like an Either monad, or that would be what I would say if I an idea what it really means).
+through only [err, data] format (what I call `errdata`) and work on that with an API (that is like an Either monad, or that would be what I would say if I an idea what it really means).
 
 (@TODO: explain that it chooses to not handle "native" errors auto-magically)
 
-# What ? I don't need any tool for that
+# Wait, I already do this ... Why would I need another useless library ?
 
 Let's say our usecase is this :
 
@@ -24,7 +20,7 @@ Updating some customer information via a webservice
 - Send an appropriate response to show the results of the request
 ```
 
-@TODO: code version
+@TODO: code
 
 Simple, right ? But that's only the happy path. We didn't handle any errors there.
 
@@ -43,6 +39,8 @@ Updating some customer information via a webservice
   - smtp errors ?
 - Send an appropriate response to show the results of the request
 ```
+
+@TODO: code
 
 @TODO: What we're doing now (callback hell => promise hell => await everything [tm])
 
@@ -82,13 +80,38 @@ define(["require"] , function (require) {
 });
 ```
 
-## API
+# API
 
-@TODO: write nice documentation when the code part is done ! (*and then forgets about it and never does it* :eyeroll:)
+@TODO: Use "railway" metaphor to illustrate (data = track#1, err = track#2)
 
-Use railway image to illustrate (with data on track 1 and err on track 2)
+## Methods
 
-- from
-- bind
-- map
-- tap
+- `from`
+- `bind`
+- `map`
+- `tap`
+- `promise`  (trasnform promises result to errdata - needs await for now)
+- `callback` (like promise, but with callbacks as inputs - needs await for now)
+
+@TODO: further explanations
+
+# Still open questions
+
+I will need real usage examples to decide what I want.
+
+- Callbacks :  Should multiple "data" args merged into data ?
+Example : `nodejs.fs.write(/* ... */, cb(err, written, string) => {})`
+should maybe be merged into [err, [written, string]] ? or [err, {written, string}] ?
+
+- How do you handle Promises/Callbacks that should only tap and not map
+`request = H.tap(await H.promise(saveIntoDatabase, request))`
+`request = H.map(await H.promise(fetchFromDatabase, request))`
+
+- We've not espaced "await hell" yet ;
+=> ideally we would just .get() at the end to get the ending errdata, regarding of methods inside
+=> promise without await ? = promiseSync ?
+=> callback without await ? = callbackSync ?
+
+- Handle multiple sources at once ?
+=> merge ? needs a merge strategy
+=> what about promises or callbacks
