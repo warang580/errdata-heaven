@@ -3,7 +3,7 @@
 **Disclaimer** : this is just an experiment for the moment, don't **actually** use it ! Definitely not in production, and probably not in dev either.
 
 Avoid callback/promises hell by handling data/errors/callbacks/promises, etc.
-through only [err, data] format (what I call `errdata`) and work on that with an API (that is like an Either monad, or that would be what I would say if I an idea what it really means).
+through promises + [err, data] format (what I call `errdata`) and work on that with an API (that is like an Either monad, or that would be what I would say if I an idea what it really means).
 
 (@TODO: explain that it chooses to not handle "native" errors auto-magically)
 
@@ -91,8 +91,8 @@ define(["require"] , function (require) {
 - `bind`
 - `map`
 - `tap`
-- `promise`  (transform promises result to errdata - needs await for now)
-- `callback` (like promise, but with callbacks as inputs - needs await for now)
+- `promise`  (transform promises result to errdata)
+- `callback` (like promise, but with callbacks as inputs)
 
 @TODO: further explanations
 
@@ -101,18 +101,18 @@ define(["require"] , function (require) {
 I will need real usage examples to decide what I want.
 
 - Callbacks :  Should multiple "data" args merged into data ?
+
 Example : `nodejs.fs.write(/* ... */, cb(err, written, string) => {})`
 should maybe be merged into [err, [written, string]] ? or [err, {written, string}] ?
 
 - How do you handle Promises/Callbacks that should only tap and not map
+
 `request = H.tap(await H.promise(saveIntoDatabase, request))`
+
 `request = H.map(await H.promise(fetchFromDatabase, request))`
 
-- We've not espaced "await hell" yet ;
-=> ideally we would just .get() at the end to get the ending errdata, regarding of methods inside
-=> promise without await ? = promiseSync ?
-=> callback without await ? = callbackSync ?
+=> H.promise should not replace tap/map/merge, it should "complement" it
 
-- Handle multiple sources at once ?
-=> merge ? needs a merge strategy
-=> what about promises or callbacks
+=> same for H.callback
+
+- We need merge strategies for merging 2+ promises
