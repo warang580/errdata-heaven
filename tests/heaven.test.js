@@ -1,5 +1,23 @@
 const H = require("../src/heaven");
 
+describe("partial application (p)", () => {
+  let sum = (x, y) => (x + y);
+
+  test("applies partially arguments", () => {
+    expect(sum(1, 2))       .toEqual(3);
+    expect(H.p(sum)(1, 2))  .toEqual(3);
+    expect(H.p(sum, 1)(2))  .toEqual(3);
+    expect(H.p(sum, 1, 2)()).toEqual(3);
+  });
+});
+
+describe("pipe", () => {
+  test("applies multiple functions in order to a value", () => {
+    expect(H.pipe(x => x * 2, x => x + 1)(2)).toEqual(5);
+  });
+});
+
+
 describe("from", () => {
   test("convert data into errdata", () => {
     expect(H.from("hello")).toEqual([null, "hello"]);

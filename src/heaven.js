@@ -10,6 +10,13 @@ let promise = async (fn, [err, data]) => {
 }
 
 module.exports = {
+  // partial application
+  // fn(x,y) == p(fn, x, y)() == p(fn, x)(y) == p(fn)(x, y)
+  p: (fn, ...args) => fn.bind(null, ...args),
+
+  // pipe(f, g)(x) == g(f(x)) // f applied first
+  pipe: (...fns) => args => fns.reduce((val, fn) => fn(val), args),
+
   // data => errdata
   from: (data) => [null, data],
 
