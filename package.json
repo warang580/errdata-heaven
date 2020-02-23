@@ -1,0 +1,10 @@
+{
+  "name": "errdata-heaven",
+  "version": "0.0.1",
+  "homepage": "https://github.com/warang580/errdata-heaven",
+  "repository": "github:warang580/errdata-heaven",
+  "bugs": "https://github.com/warang580/errdata-heaven/issues",
+  "description": "Callbacks/promises heaven with [err, data] all the way",
+  "keywords": ["callback", "promise", "hell", "errdata", "heaven"],
+  "license": "MIT"
+}
