@@ -1,93 +1,72 @@
 const H = require("../src/heaven");
 
 // Testing promise values not available at start
-let later = (value) => {
-  return new Promise((resolve) => {
+let later = (value, fails = false) => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
-      resolve(value);
-    }, 100);
+      if (fails) {
+        reject(value);
+      } else {
+        resolve(value);
+      }
+    }, 1);
   })
 }
 
-describe("from", () => {
-  test("convert data into P(errdata)", async () => {
-    expect(await H.from("hello")).toEqual([null, "hello"]);
+describe("wrap", () => {
+  test("data => Promise+(errdata+)", async () => {
+    expect(await H.wrap("hello")).toEqual([null, "hello"]);
   });
 });
 
-describe("promise", () => {
-  let slowInc = (x) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => resolve(x + 1), 100);
-    });
-  };
-
-  test("data->promise", async () => {
-    expect(await H.promise(slowInc, later([null, 2]))).toEqual([null, 3]);
-  });
-
-  // @TODO: promise fails
-  // @TODO: errdata fails
-  // @TODO: err not null
-});
-
-describe("map", () => {
-  test("data->data into P(errdata)", async () => {
+describe("map (data->data)", () => {
+  test("Map(Promise+(Errdata+)) => Errdata+", async () => {
     expect(await H.map(x => (x + 1), later([null, 5]))).toEqual([null, 6]);
   });
 
-  // @TODO: promise fails
-  // @TODO: errdata not deferred
-  // @TODO: errdata fails
-  // @TODO: err not null
-});
-
-describe("bind", () => {
-  test("data->errdata into P(errdata)", async () => {
-    expect(await H.bind(x => [null, x], later([null, 5]))).toEqual([null, 5]);
+  test("Map(Promise+(Errdata-)) => Errdata-", async () => {
+    expect(await H.map(x => (x + 1), later(["error", null]))).toEqual(["error", null]);
   });
 
-  // @TODO: promise fails
-  // @TODO: errdata not deferred
-  // @TODO: errdata fails
-  // @TODO: err not null
+  test("Map(Promise-(Errdata)) => Errdata", async () => {
+    expect(await H.map(x => (x + 1), later("failure", true))).toEqual(["failure", null]);
+  });
 });
 
-describe("guard", () => {
-  test("data->err into P(errdata)", async () => {
+describe("bind (data->errdata)", () => {
+  test("Bind+(Promise+(Errdata+)) => Errdata+", async () => {
+    expect(await H.bind(x => [null, x + 1], later([null, 5]))).toEqual([null, 6]);
+  });
+
+  test("Bind+(Promise+(Errdata-)) => Errdata-", async () => {
+    expect(await H.bind(x => [null, x + 1], later(["error", null]))).toEqual(["error", null]);
+  });
+
+  test("Bind-(Promise+(Errdata+)) = Errdata-", async () => {
+    expect(await H.bind(x => ["error", null], later([null, 5]))).toEqual(["error", null]);
+  });
+
+  // @TODO: variations with Promise- and Errdata-
+});
+
+describe("guard (data->err)", () => {
+  test("Guard+(Promise+(Errdata+)) => Errdata+", async () => {
     expect(await H.guard(x => null, later([null, 5]))).toEqual([null, 5]);
   });
 
-  // @TODO: promise fails
-  // @TODO: errdata not deferred
-  // @TODO: errdata fails
-  // @TODO: err not null
+  test("Guard+(Promise+(Errdata-)) => Errdata-", async () => {
+    expect(await H.guard(x => null, later(["error", null]))).toEqual(["error", null]);
+  });
+
+  test("Guard-(Promise+(Errdata+)) => Errdata+", async () => {
+    expect(await H.guard(x => "error", later([null, 5]))).toEqual(["error", null]);
+  });
+
+  // @TODO: variations with Promise- and Errdata-
 });
 
-// describe.skip("bind", () => {
-//   let checkAdult = (user) => {
-//     if (user.age < 18) {
-//       return ["User should be an adult", null];
-//     }
-//
-//     return [null, user];
-//   };
-//
-//   test("uses fn on data when there's no error", () => {
-//     expect(H.bind(checkAdult, [null, {age: 30}])).toEqual([null, {age: 30}]);
-//   });
-//
-//   test("uses fn on data when there's no error", () => {
-//     expect(H.bind(checkAdult, [null, {age: 16}])).toEqual(["User should be an adult", null]);
-//   });
-//
-//   test("does nothing with errors", () => {
-//     expect(H.bind(checkAdult, ["Invalid user name", null])).toEqual(["Invalid user name", null]);
-//   });
-// });
-
-describe("tap", () => {
-  test("data->(nothing)", async () => {
+describe("tap (data->[ignored])", () => {
+  test("Promise+(Errdata+)", async () => {
     let cb = jest.fn().mockImplementation(() => "unusedReturn");
 
     expect(await H.tap(cb, later([null, "value"]))).toEqual([null, "value"]);
@@ -96,10 +75,48 @@ describe("tap", () => {
     expect(cb.mock.calls[0][0]).toEqual("value");
   });
 
+  test("Promise+(Errdata-)", async () => {
+    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+
+    expect(await H.tap(cb, later(["error", null]))).toEqual(["error", null]);
+
+    expect(cb.mock.calls.length).toBe(0);
+  });
+
   // @TODO: promise fails
   // @TODO: errdata not deferred
   // @TODO: errdata fails
   // @TODO: err not null
+});
+
+describe("errtap (err->[ignored])", () => {
+  test("Promise+(Errdata+)", async () => {
+    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+
+    expect(await H.errtap(cb, later([null, "value"]))).toEqual([null, "value"]);
+
+    expect(cb.mock.calls.length).toBe(0);
+  });
+
+  test("Promise+(Errdata-)", async () => {
+    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+
+    expect(await H.errtap(cb, later(["error", null]))).toEqual(["error", null]);
+
+    expect(cb.mock.calls.length).toBe(1);
+    expect(cb.mock.calls[0][0]).toEqual("error");
+  });
+
+  // @TODO: promise fails
+  // @TODO: errdata not deferred
+  // @TODO: errdata fails
+  // @TODO: err not null
+});
+
+describe("promise (data->promise)", () => {
+  test("Callback+(Promise+(Errdata+)) => Errdata+", async () => {
+    expect(await H.promise(x => later(x + 1), later([null, 2]))).toEqual([null, 3]);
+  });
 });
 
 describe("partial", () => {
@@ -118,7 +135,7 @@ describe("pipe", () => {
   let add = (x, y) => (x + y);
   let mul = (x, y) => (x * y);
 
-  test("applies partially arguments", () => {
+  test("transforms list of [fn, ...args] into one function", () => {
     expect(H.pipe(
       [add, 1],
       [mul, 2],
