@@ -85,14 +85,17 @@ define(["require"] , function (require) {
 
 @TODO: Use "railway" metaphor to illustrate (data = track#1, err = track#2)
 
-## Methods
+## Methods (~transforms)
 
-- `from`
-- `bind`
-- `map`
-- `tap`
-- `promise`  (transform promises result to errdata)
-- `callback` (like promise, but with callbacks as inputs)
+- `wrap` : Wraps a simple value into a Promise(Errdata)
+- `bind` : Transform an Promise(Errdata) with a data->errdata fn
+- `map`  : Transform an Promise(Errdata) with a data->data fn
+- `tap`  : Apply a data->(ignored) to a Promise(Errdata)
+
+## "Adapters"
+
+- `promise`  : Transform Promise(value) to Promise(Errdata)
+- `callback` : Transform callback(err, ...values) to Promise(Errdata)
 
 @TODO: further explanations
 
@@ -111,8 +114,12 @@ should maybe be merged into [err, [written, string]] ? or [err, {written, string
 
 `request = H.map(await H.promise(fetchFromDatabase, request))`
 
-=> H.promise should not replace tap/map/merge, it should "complement" it
-
-=> same for H.callback
+=> H.promise should not replace tap/map/merge, it should "complement" it ; same for H.callback
 
 - We need merge strategies for merging 2+ promises
+
+- H.merge(mergeDataStrategy, [...sources], p)
+
+- H.rescue (for err -> errdata) ?
+
+- H.errtap ?
