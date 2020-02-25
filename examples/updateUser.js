@@ -80,24 +80,23 @@ let guardMissingField = (field, errorMessage, data) => {
   // return false|null;
 }
 
-let updateUser = H.pipe(
-  [H.from],
-  // [H.bind,  checkName],
-  // [H.bind,  checkEmail],
-  // [H.guard, guardEmailUnique],
-  [H.guard, H.partial(guardMissingField, "age")],
-  // [H.guard, guardAdult],
-  [H.map, setUpdatedAtToNow],
-  [H.promise, updateUserDb],
-  // [H.callback, writeUser],
-  [H.promise, sendUpdateEmail],
-);
+let updateUser = (user) => {
+  let p = H.wrap(user);
 
-// @TODO: merging strategy when promise don't return what we want (tap/merge)
-// => probably remove "promise" fct and handle everything as a potential promise
+  p = H.bind(checkName, p);
+  p = H.bind(checkEmail, p);
+  p = H.guard(guardEmailUnique, p);
+  p = H.guard(H.partial(guardMissingField, "age", "Missing user age"), p);
+  p = H.guard(guardAdult, p);
+  p = H.map(setUpdatedAtToNow, p);
 
-updateUser({name: "John Doe", age: 30}).then(([err, data]) => {
+  // p = H.promise(updateUserDb, p);
+  // p = H.callback(writeUser, p);
+  // p = H.promise(sendUpdateEmail, p);
+
+  return p;
+}
+
+updateUser({name: "John Doe", email: "john.doe@mail.com", age: 40 }).then(([err, data]) => {
   console.log("update?", err, data);
 });
-
-console.log("your request is in progress...")

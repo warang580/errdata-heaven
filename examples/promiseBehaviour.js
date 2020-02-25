@@ -27,6 +27,5 @@ console.log("1 + 2 = ", sum(1, 2));
 // 1 + 2 = Promise { <pending> }
 // computed 3
 
-// ... Ok, actually, it's expected behavior :/
 // sum() is running in another thread while it's waiting for the promise to resolve
 // the rest of the program doesn't stop
