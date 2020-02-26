@@ -1,30 +1,43 @@
 # Callbacks/Promises heaven with [err,data] all the way
 
-**Disclaimer** : this is just an experiment for the moment, don't **actually** use it ! Definitely not in production, and probably not in dev either.
+**Disclaimer** : this project is a work in progress, don't use it yet !
 
 Avoid callback/promises hell by handling data/errors/callbacks/promises, etc.
-through promises + [err, data] format (what I call `errdata`) and work on that with an API (that is like an Either monad, or that would be what I would say if I an idea what it really means).
+with an API that creates and transforms `errdata` (= `[err, data]`) promises.
 
-(@TODO: explain that it chooses to not handle "native" errors auto-magically)
+(@TODO: explain that it chooses to not handle "native" errors auto-magically ... yet ?)
 
-# Wait, I already do this ... Why would I need another useless library ?
+# I already know how to handle Promises ... Why would I need another useless library ? :thinking:
 
-Let's say our usecase is this :
+When we think about Promises we think generally about simple usecases :
+
+> Given a user.update function that returns a Promise
 
 ```
-Updating some customer information via a webservice
-- Incoming request : A user wants to update their data (userid, name, email, age)
-- Check that name, email and age are valid
-- The appropriate user record in a database is updated with the new data (change updated_at)
-- If the email has changed, send an email to that address
-- Send an appropriate response to show the results of the request
+user.update(data).then(user => {
+    console.log("user", user);
+    // ...
+}).catch(err => {
+    console.error("Something bad happened", err)
+})
 ```
 
-@TODO: code
+or
 
-Simple, right ? But that's only the happy path. We didn't handle any errors there.
+```
+try {
+    let user = await user.update(data);
 
-The "real" usecase is this :
+    console.log("user", user);
+    // ...
+} catch (err) {
+    console.log("Something bad happened", err);
+}
+```
+
+Simple, right ?
+
+But, let's say our usecase is this (which is really common in data-oriented programs)
 
 ```
 Updating some customer information via a webservice
@@ -42,9 +55,13 @@ Updating some customer information via a webservice
 
 @TODO: code
 
-@TODO: What we're doing now (callback hell => promise hell => await everything [tm])
+That's way more complicated **and** ugly.
 
-# Ok, what's your superior way of doing things then ? :thinking:
+@TODO: What are we doing now ? (callback hell => promise hell => await everything [tm])
+
+# Another way
+
+@TODO: Use "railway" metaphor to illustrate (data = track#1, err = track#2)
 
 ## Procedural examples
 
@@ -83,14 +100,14 @@ define(["require"] , function (require) {
 
 # API
 
-@TODO: Use "railway" metaphor to illustrate (data = track#1, err = track#2)
+@TODO: Re-use "railway" metaphor
 
-## Methods (~transforms)
+## Methods
 
 - `wrap` : Wraps a simple value into a Promise(Errdata)
 - `bind` : Transform an Promise(Errdata) with a data->errdata fn
 - `map`  : Transform an Promise(Errdata) with a data->data fn
-- `tap`  : Apply a data->(ignored) to a Promise(Errdata)
+- `tap`  : Apply a data->*ignored* to a Promise(Errdata)
 
 ## "Adapters"
 
@@ -100,8 +117,6 @@ define(["require"] , function (require) {
 @TODO: further explanations
 
 # Still open questions
-
-I will need real usage examples to decide what I want.
 
 - Callbacks :  Should multiple "data" args merged into data ?
 
@@ -118,8 +133,8 @@ should maybe be merged into [err, [written, string]] ? or [err, {written, string
 
 - We need merge strategies for merging 2+ promises
 
-- H.merge(mergeDataStrategy, [...sources], p)
+- `H.merge(mergeDataStrategy, [...sources], p)`
 
-- H.rescue (for err -> errdata) ?
+- `H.rescue` (for err -> errdata) ?
 
-- H.errtap ?
+- `H.errtap` ? yes, will be added
