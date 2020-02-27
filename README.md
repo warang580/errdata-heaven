@@ -113,25 +113,15 @@ define(["require"] , function (require) {
 ## "Adapters"
 
 - `promise`  : Transform Promise(value) to Promise(Errdata)
-- `callback` : Transform callback(err, ...values) to Promise(Errdata)
+- `callback` : Transform callback(err, ...data) to Promise(Errdata)
 
 @TODO: further explanations
 
 # Still open questions
 
-- Callbacks :  Should multiple "data" args merged into data ?
+- Should you way wait async taps ? can we have async map/bind/guard etc. ?
 
-Example : `nodejs.fs.write(/* ... */, cb(err, written, string) => {})`
-should maybe be merged into [err, [written, string]] ? or [err, {written, string}] ?
-
-- How do you handle Promises/Callbacks that should only tap and not map
-
-`request = H.tap(await H.promise(saveIntoDatabase, request))`
-
-`request = H.map(await H.promise(fetchFromDatabase, request))`
-
-=> H.promise should not replace tap/map/merge, it should "complement" it ; same for H.callback
+guard(x => x.success == true ? null : "Email not unique", H.promise(uniqueEmail, user))
 
 - We need merge strategies for merging 2+ promises => H.merge(mergeDataStrategy, [...sources], p)
-
 - H.rescue (for err -> errdata) ?
