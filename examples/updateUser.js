@@ -40,6 +40,23 @@ let setUpdatedAtToNow = (request) => {
   });
 };
 
+
+let guardEmailUnique = (data) => {
+  // @TODO: not implemented yet, let's say it's always passing
+  return null;
+}
+
+let guardMissingField = (field, errorMessage, data) => {
+  let value = data[field];
+
+  if (! value) {
+    return errorMessage
+  }
+
+  // no return or
+  // return false|null;
+}
+
 let updateUserDb = (user) => {
   return new Promise((resolve, reject) => {
     // Take 100ms to update user
@@ -64,23 +81,16 @@ let sendUpdateEmail = (user) => {
   });
 };
 
-let guardEmailUnique = (data) => {
-  // @TODO: not implemented yet, let's say it's always passing
-  return null;
+// callback(err, written, string), nodejs style
+let writeUser = (path, contents, callback) => {
+  let raw = JSON.stringify(contents);
+
+  console.log("written", raw, "(" + raw.length + " characters) in", path);
+
+  callback(/* err */ null, /* written */ raw.length, /* string */ raw);
 }
 
-let guardMissingField = (field, errorMessage, data) => {
-  let value = data[field];
-
-  if (! value) {
-    return errorMessage
-  }
-
-  // no return or
-  // return false|null;
-}
-
-let updateUser = (user) => {
+let handleUserUpdate = (user) => {
   let p = H.wrap(user);
 
   p = H.bind(checkName, p);
@@ -89,21 +99,19 @@ let updateUser = (user) => {
   p = H.guard(H.partial(guardMissingField, "age", "Missing user age"), p);
   p = H.guard(guardAdult, p);
   p = H.map(setUpdatedAtToNow, p);
-  p = H.dump("before", p);
-  p = H.promise(updateUser, p);
-  p = H.dump("after", p);
-
-  // p = H.promise(updateUserDb, p);
-  // p = H.callback(writeUser, p);
-  // p = H.promise(sendUpdateEmail, p);
+  p = H.promise(updateUserDb, p); // works as-is because updateUserDb returns User :+1:
+  // Write user but don't save output in pipe
+  p = H.dump("before write", p);
+  // @NOTE: tap doesn't wait async behaviour ... bug or feature :thinking:
+  p = H.tap(() => H.callback((user, cb) => writeUser('path/to/user', user, cb), p), p);
+  p = H.dump("after write", p);
+  p = H.promise(sendUpdateEmail, p);
 
   return p;
 }
 
-updateUser({name: "John Doe", email: "john.doe@mail.com", age: 40 }).then(([err, data]) => {
-  console.log("update done", err, data);
-}).catch(err => {
-  console.log("just in case ?", err);
-});
+handleUserUpdate({name: "John Doe", email: "john.doe@mail.com", age: 40 }).then(([err, data]) => {
+  console.log("done !", err, data);
+}); // .catch() not needed
 
-console.log("updating ...");
+console.log("starting updating ...");
