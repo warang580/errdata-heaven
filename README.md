@@ -104,10 +104,11 @@ define(["require"] , function (require) {
 
 ## Methods
 
-- `wrap` : Wraps a simple value into a Promise(Errdata)
-- `bind` : Transform an Promise(Errdata) with a data->errdata fn
-- `map`  : Transform an Promise(Errdata) with a data->data fn
-- `tap`  : Apply a data->*ignored* to a Promise(Errdata)
+- `wrap`   : Wraps a simple value into a Promise(Errdata)
+- `bind`   : Transform an Promise(Errdata) with a data->errdata fn
+- `map`    : Transform an Promise(Errdata) with a data->data fn
+- `tap`    : Apply a data->*ignored* to a Promise(Errdata)
+- `errtap` : Apply a err->*ignored*  to a Promise(Errdata)
 
 ## "Adapters"
 
@@ -131,10 +132,6 @@ should maybe be merged into [err, [written, string]] ? or [err, {written, string
 
 => H.promise should not replace tap/map/merge, it should "complement" it ; same for H.callback
 
-- We need merge strategies for merging 2+ promises
+- We need merge strategies for merging 2+ promises => H.merge(mergeDataStrategy, [...sources], p)
 
-- `H.merge(mergeDataStrategy, [...sources], p)`
-
-- `H.rescue` (for err -> errdata) ?
-
-- `H.errtap` ? yes, will be added
+- H.rescue (for err -> errdata) ?
