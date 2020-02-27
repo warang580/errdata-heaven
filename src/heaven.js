@@ -91,36 +91,32 @@ module.exports = {
     });
   },
 
+  // Transform (data, cb(err, data)) into a "errdata promise"
+  // fn: ((data, cb) => { cb(err, data) })
+  callback: async (fn, deferredErrdata) => {
+    return new Promise(resolve => {
+      deferredErrdata.then(([err, data]) => {
+        if (err !== null) return resolve([err, null]);
+        fn(data, (err, ...data2) => {
+          if (err !== null) return resolve([err, null]);
+          return resolve([err, data2]);
+        });
+      }).catch(err => {
+        resolve([err, null]);
+      });
+    });
+  },
+
   // @NOTE: not tested, for debug only ... might be useful
   dump: (label, deferredErrdata) => {
     deferredErrdata.then(([err, data]) => {
       console.log(label, [err, data]);
+    }).catch(err => {
+      console.log(label, [err, null]);
     });
 
     return deferredErrdata;
   },
-
-  // // Transform (data, cb(err, data)) into a "errdata promise"
-  // callback: async (fn, [err, data]) => {
-  //   return promise((data) => {
-  //     return new Promise((resolve, reject) => {
-  //       fn(data, (err, data) => {
-  //         if (err !== null) reject(err);
-  //         resolve(data);
-  //       });
-  //     })
-  //   }, [err, data]);
-  //
-  //   // is equivalent to (with promise dependency)
-  //
-  //   // if (err != null) return [err, null];
-  //   // return new Promise((resolve, reject) => {
-  //   //   fn(data, (err, data) => {
-  //   //     if (err !== null) reject([err, null]);
-  //   //     resolve([null, data]);
-  //   //   });
-  //   // }).then(id).catch(id);
-  // },
 
   // partial application
   // fn(x,y) == p(fn, x, y)() == p(fn, x)(y) == p(fn)(x, y)

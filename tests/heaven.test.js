@@ -166,6 +166,53 @@ describe("promise (data->promise)", () => {
   });
 });
 
+describe("callback ((data, cb)->promise)", () => {
+  test("Callback+(Promise+(Errdata+)) => Errdata+", async () => {
+    expect(
+      await H.callback(
+        (data, cb) => { cb(null, data.length, data) },
+        later([null, "hello"])
+      )
+    ).toEqual([null, [5, "hello"]]);
+  });
+
+  test("Callback+(Promise+(Errdata-)) => Errdata-", async () => {
+    expect(
+      await H.callback(
+        (data, cb) => { cb(null, data.length, data) },
+        later(["error", null])
+      )
+    ).toEqual(["error", null]);
+  });
+
+  test("Callback-(Promise+(Errdata+)) => Errdata-", async () => {
+    expect(
+      await H.callback(
+        (data, cb) => { cb("failure") },
+        later([null, "hello"])
+      )
+    ).toEqual(["failure", null]);
+  });
+
+  test("Callback-(Promise+(Errdata-)) => Errdata-", async () => {
+    expect(
+      await H.callback(
+        (data, cb) => { cb("failure") },
+        later(["error", null])
+      )
+    ).toEqual(["error", null]);
+  });
+
+  test("Callback-(Promise-(Errdata)) => Errdata-", async () => {
+    expect(
+      await H.callback(
+        (data, cb) => { cb("failure2") },
+        later("failure", true)
+      )
+    ).toEqual(["failure", null]);
+  });
+});
+
 describe("partial", () => {
   let sum = (x, y) => (x + y);
 
@@ -190,34 +237,3 @@ describe("pipe", () => {
     )(1)).toEqual(6);
   });
 });
-
-// describe.skip("error", () => {
-//   test("convert err into errdata", () => {
-//     expect(H.error("something bad happened")).toEqual(["something bad happened", null]);
-//   });
-// });
-
-// describe.skip("callback", () => {
-//   let readFile = (path, callback) => {
-//     if (path == "path/to/file") {
-//       callback(null, "contents");
-//       return;
-//     }
-//
-//     callback("file not found");
-//   };
-//
-//   test("takes a data,cb->(nothing) fn and return [null, value] with cb(null, value)", async () => {
-//     expect(await H.callback(readFile, [null, "path/to/file"])).toEqual([null, "contents"]);
-//   });
-//
-//   test("takes a data,cb->(nothing) fn and return [err, null] with cb(err, null)", async () => {
-//     expect(await H.callback(readFile, [null, "unknown"])).toEqual(["file not found", null]);
-//   });
-//
-//   test("does nothing with errors", async () => {
-//     let fakeReadFile = jest.fn();
-//     expect(await H.callback(readFile, ["error", null])).toEqual(["error", null]);
-//     expect(fakeReadFile).toHaveBeenCalledTimes(0);
-//   });
-// });
