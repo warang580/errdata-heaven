@@ -1,7 +1,7 @@
 const F = require("./utils");
 
 module.exports = {
-  // data => P(errdata)
+  // data => Promise(errdata)
   wrap: v => Promise.resolve([null, v]),
 
   // fn: (data->errdata)
@@ -10,9 +10,9 @@ module.exports = {
       deferredErrdata.then(([err, data]) => {
         if (err !== null) return resolve([err, null]);
         resolve(fn(data));
-      });/*.catch(err => {
+      }).catch(err => {
         resolve([err, null]);
-      })*/
+      })
     });
   },
 
@@ -43,50 +43,61 @@ module.exports = {
 
         resolve([null, data]);
         return;
-      });/*.catch(err => {
+      }).catch(err => {
         resolve([err, null]);
-      })*/
+      });
     });
   },
 
-  // fn: (data->[ignored])
+  // fn: (data->*ignored*)
   tap: (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
         if (err !== null) return resolve([err, null]);
 
         resolve([null, F.tap(fn, data)]);
-      })/*.catch(err => {
+      }).catch(err => {
         resolve([err, null]);
-      })*/
+      })
     });
   },
 
-  // fn: (err->[ignored])
+  // fn: (err->*ignored*)
   errtap: (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
         if (err === null) return resolve([null, data]);
 
         resolve([F.tap(fn, err), null]);
-      })/*.catch(err => {
-        resolve([err, null]);
-      })*/
+      }).catch(err => {
+        resolve([F.tap(fn, err), null]);
+      })
     });
   },
 
-  // fn: (data->promise)
+  // fn: (data->promise(data))
   promise: (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
-        // if (err !== null) return resolve([err, null]);
+        if (err !== null) return resolve([err, null]);
         fn(data).then(data => {
           resolve([null, data]);
-        })/*.catch(err => {
+        }).catch(err => {
           resolve([err, null]);
-        })*/
+        })
+      }).catch(err => {
+        resolve([err, null]);
       });
     });
+  },
+
+  // @NOTE: not tested, for debug only ... might be useful
+  dump: (label, deferredErrdata) => {
+    deferredErrdata.then(([err, data]) => {
+      console.log(label, [err, data]);
+    });
+
+    return deferredErrdata;
   },
 
   // // Transform (data, cb(err, data)) into a "errdata promise"

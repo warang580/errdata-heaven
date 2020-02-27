@@ -89,6 +89,9 @@ let updateUser = (user) => {
   p = H.guard(H.partial(guardMissingField, "age", "Missing user age"), p);
   p = H.guard(guardAdult, p);
   p = H.map(setUpdatedAtToNow, p);
+  p = H.dump("before", p);
+  p = H.promise(updateUser, p);
+  p = H.dump("after", p);
 
   // p = H.promise(updateUserDb, p);
   // p = H.callback(writeUser, p);
@@ -98,5 +101,9 @@ let updateUser = (user) => {
 }
 
 updateUser({name: "John Doe", email: "john.doe@mail.com", age: 40 }).then(([err, data]) => {
-  console.log("update?", err, data);
+  console.log("update done", err, data);
+}).catch(err => {
+  console.log("just in case ?", err);
 });
+
+console.log("updating ...");

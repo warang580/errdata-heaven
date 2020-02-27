@@ -1,6 +1,6 @@
 const H = require("../src/heaven");
 
-// Testing promise values not available at start
+// Testing deferred values (resolved/rejected)
 let later = (value, fails = false) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -42,11 +42,21 @@ describe("bind (data->errdata)", () => {
     expect(await H.bind(x => [null, x + 1], later(["error", null]))).toEqual(["error", null]);
   });
 
+  test("Bind+(Promise-(Errdata)) => Errdata-", async () => {
+    expect(await H.bind(x => [null, x + 1], later("failure", true))).toEqual(["failure", null]);
+  });
+
   test("Bind-(Promise+(Errdata+)) = Errdata-", async () => {
     expect(await H.bind(x => ["error", null], later([null, 5]))).toEqual(["error", null]);
   });
 
-  // @TODO: variations with Promise- and Errdata-
+  test("Bind-(Promise+(Errdata-)) = Errdata-", async () => {
+    expect(await H.bind(x => ["error", null], later(["bad", null]))).toEqual(["bad", null]);
+  });
+
+  test("Bind-(Promise-(Errdata)) => Errdata-", async () => {
+    expect(await H.bind(x => ["error", null], later("failure", true))).toEqual(["failure", null]);
+  });
 });
 
 describe("guard (data->err)", () => {
@@ -62,7 +72,17 @@ describe("guard (data->err)", () => {
     expect(await H.guard(x => "error", later([null, 5]))).toEqual(["error", null]);
   });
 
-  // @TODO: variations with Promise- and Errdata-
+  test("Guard-(Promise+(Errdata-)) => Errdata+", async () => {
+    expect(await H.guard(x => "error", later(["failure", null]))).toEqual(["failure", null]);
+  });
+
+  test("Guard+(Promise-(Errdata)) => Errdata+", async () => {
+    expect(await H.guard(x => null, later("failure", true))).toEqual(["failure", null]);
+  });
+
+  test("Guard-(Promise-(Errdata)) => Errdata+", async () => {
+    expect(await H.guard(x => "error", later("failure", true))).toEqual(["failure", null]);
+  });
 });
 
 describe("tap (data->[ignored])", () => {
@@ -83,10 +103,13 @@ describe("tap (data->[ignored])", () => {
     expect(cb.mock.calls.length).toBe(0);
   });
 
-  // @TODO: promise fails
-  // @TODO: errdata not deferred
-  // @TODO: errdata fails
-  // @TODO: err not null
+  test("Promise-(Errdata)", async () => {
+    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+
+    expect(await H.tap(cb, later("failure", true))).toEqual(["failure", null]);
+
+    expect(cb.mock.calls.length).toBe(0);
+  });
 });
 
 describe("errtap (err->[ignored])", () => {
@@ -107,15 +130,39 @@ describe("errtap (err->[ignored])", () => {
     expect(cb.mock.calls[0][0]).toEqual("error");
   });
 
-  // @TODO: promise fails
-  // @TODO: errdata not deferred
-  // @TODO: errdata fails
-  // @TODO: err not null
+  test("Promise-(Errdata)", async () => {
+    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+
+    expect(await H.errtap(cb, later("failure", true))).toEqual(["failure", null]);
+
+    expect(cb.mock.calls.length).toBe(1);
+    expect(cb.mock.calls[0][0]).toEqual("failure");
+  });
 });
 
 describe("promise (data->promise)", () => {
   test("Callback+(Promise+(Errdata+)) => Errdata+", async () => {
     expect(await H.promise(x => later(x + 1), later([null, 2]))).toEqual([null, 3]);
+  });
+
+  test("Callback+(Promise+(Errdata-)) => Errdata-", async () => {
+    expect(await H.promise(x => later(x + 1), later(["error", null]))).toEqual(["error", null]);
+  });
+
+  test("Callback+(Promise-(Errdata)) => Errdata-", async () => {
+    expect(await H.promise(x => later(x + 1), later("failure", true))).toEqual(["failure", null]);
+  });
+
+  test("Callback-(Promise+(Errdata+)) => Errdata-", async () => {
+    expect(await H.promise(x => later("error", true), later([null, 2]))).toEqual(["error", null]);
+  });
+
+  test("Callback-(Promise+(Errdata-)) => Errdata-", async () => {
+    expect(await H.promise(x => later("error2", true), later(["error", null]))).toEqual(["error", null]);
+  });
+
+  test("Callback-(Promise-(Errdata)) => Errdata-", async () => {
+    expect(await H.promise(x => later("failure2", true), later("failure", true))).toEqual(["failure", null]);
   });
 });
 
