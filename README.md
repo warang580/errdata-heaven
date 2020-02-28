@@ -102,18 +102,23 @@ define(["require"] , function (require) {
 
 @TODO: Re-use "railway" metaphor
 
-## Methods
+<method>(fn, ..., ^errdata)
+("^" means in a promise)
 
-- `wrap`   : Wraps a simple value into a Promise(Errdata)
-- `bind`   : Transform an Promise(Errdata) with a data->errdata fn
-- `map`    : Transform an Promise(Errdata) with a data->data fn
-- `tap`    : Apply a data->*ignored* to a Promise(Errdata)
-- `errtap` : Apply a err->*ignored*  to a Promise(Errdata)
+data is always last, so it can be "late-bound"
 
-## "Adapters"
+## Constructors (methods that returns ^errdata, can be used as 2nd argument of methods)
 
-- `promise`  : Transform Promise(value) to Promise(Errdata)
-- `callback` : Transform callback(err, ...data) to Promise(Errdata)
+- `wrap(value)` : Wraps a simple value into a Promise(Errdata)
+- `promise(syncFnReturningPromise, ^errdata)`  : Transform Promise(value) to Promise(Errdata)
+- `callback(syncFnWithCallback, ^errdata)` : Transform callback(err, ...data) to Promise(Errdata)
+
+## Transforms on ^errdata
+
+- `bind(syncFn, ^errdata)`   : Transform an Promise(Errdata) with a data->errdata fn
+- `map(syncFn, ^errdata)`    : Transform an Promise(Errdata) with a data->data fn
+- `tap(syncFn, ^errdata)`    : Apply a data->*ignored* to a Promise(Errdata)
+- `errtap(syncFn, ^errdata)` : Apply a err->*ignored*  to a Promise(Errdata)
 
 @TODO: further explanations
 
