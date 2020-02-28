@@ -116,6 +116,7 @@ data is always last, so it can be "late-bound"
 ## Transforms on ^errdata
 
 - `bind(syncFn, ^errdata)`   : Transform an Promise(Errdata) with a data->errdata fn
+- `guard(syncFn, ^errdata)`  : Transform an Promise(Errdata) with a data->err fn
 - `map(syncFn, ^errdata)`    : Transform an Promise(Errdata) with a data->data fn
 - `tap(syncFn, ^errdata)`    : Apply a data->*ignored* to a Promise(Errdata)
 - `errtap(syncFn, ^errdata)` : Apply a err->*ignored*  to a Promise(Errdata)
