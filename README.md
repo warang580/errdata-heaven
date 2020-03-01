@@ -35,7 +35,7 @@ try {
 
 Simple, right ?
 
-Ok, but in reality, nothing is that simple. The client actually wants to check that the user has a valid email because we will send him a mail after the update is done, but only if his email changed.
+Ok, but in reality, nothing is that simple. Maybe what we want is to check that the user has a valid email because we will send him a mail after the update is done, but only if his email changed.
 We have to check for SMTP errors too. (let's say that our UI requirement for telling the user about what happened is just console.log or console.error)
 
 ```js
@@ -65,7 +65,7 @@ Not so nice. You can see that more verifications could lead to another level in 
 Speaking of the devil, let's say our "real" usecase for updating the user is this :
 
 ```
-- Incoming request : A user wants to update their data (userid, name, email, age)
+- A user wants to update their data (userid, name, email, age)
 - Check that name, email and age are valid
  - validation errors ?
  - maybe checking that we don't have any other user with that new email ?
@@ -100,10 +100,7 @@ fs.readFile('path/to/file', (err, data) => {
 
 Here you have `err` and `data` as parameters of the callback : `err` contains any error that have occured while we tried to read the file and `data` contains the contents of the file we read. In this library, the concept `errdata` is simply an array that contains both err and data (`[err, data]`) on which we have methods.
 
-Only one of err and data is set at a time, the other is always null.
-
-`[err, null]` means an error occured
-`[null, data]` means no error occured
+Only one of err and data is set at a time, the other is always `null`. `[err, null]` means an error occured, `[null, data]` means no error occured.
 
 You might say that it doesn't change anything. But the clever twist is this : You generally don't care about data *when an error occured*. Say you wanted to update a user, whether the error is from the request validation that fails, a crash from the database, etc. you want to stop processing data. You don't want to send an email when you didn't load correctly its contents when reading a file. In this library, we handle that behaviour by default which simplifies a lot the code. As a developer, you're just dealing with something that is potentially an error or real data but you don't care until the end.
 
@@ -116,8 +113,8 @@ And since we're applying the same concept for promises and callbacks, you can ha
 
 ## Examples
 
-- A simple HTTP request : `examples/fetchJoke.js`
-- Full user updated usecase discussed above : `examples/updateUser.js`
+- [A simple HTTP request](examples/fetchJoke.js)
+- [Full user updated usecase discussed above](examples/updateUser.js)
 
 # Using it
 
@@ -150,45 +147,28 @@ define(["require"] , function (require) {
 
 @TODO: Re-use "railway" metaphor
 
-(note: internally ^errdata is a promise that resolves to an errdata ; but the library is meant to be used ignoring this fact)
+In all the functions, errdata is always the last argument
 
-<method>(fn, ..., ^errdata)
-("^" means in a promise)
+## Constructors
 
-data is always in the last argument(s), so it can be "late-bound" with "pipes" (easier for functional programming)
+- `wrap(value)`                              : Wraps a simple value into errdata
+- `promise(syncFnReturningPromise, errdata)` : Transform data->promise(data) to errdata
+- `callback(syncFnWithCallback, errdata)`    : Transform callback(err, ...data) to errdata
 
-## Constructors (methods that returns ^errdata, can be used as last argument of other methods
+## Transforming errdata's data
 
-- `wrap(value)` : Wraps a simple value into a Promise(Errdata)
-- `promise(syncFnReturningPromise, ^errdata)`  : Transform Promise(value) to Promise(Errdata)
-- `callback(syncFnWithCallback, ^errdata)` : Transform callback(err, ...data) to Promise(Errdata)
+- `bind(syncFn, errdata)`  : Transform an errdata with a data->errdata fn
+- `guard(syncFn, errdata)` : Transform an errdata with a data->err fn
+- `map(syncFn, errdata)`   : Transform an errdata with a data->data fn
 
-## Transforms on ^errdata
+## Applying side-effects on errdata
 
-- `bind(syncFn, ^errdata)`   : Transform an Promise(Errdata) with a data->errdata fn
-
-- `guard(syncFn, ^errdata)`  : Transform an Promise(Errdata) with a data->err fn
-
-- `map(syncFn, ^errdata)`    : Transform an Promise(Errdata) with a data->data fn
-
-## Applying side-effects on ^errdata
-
-- `tap(syncFn, ^errdata)`    : Apply a data->*ignored* to a Promise(Errdata)
-Note: `tap` doesn't wait async behaviour, that's a feature, not a bug
-
-- `errtap(syncFn, ^errdata)` : Apply a err->*ignored*  to a Promise(Errdata)
-
-- `unwrap(syncFn, ^errdata)` : Apply a errdata->*ignored* to a Promise(Errdata)
-
-// Useful for ending "streams" (instead of await + try/catch)
-p = unwrap((err,data) => {...}, ^errdata)
-// or for debug
-let logger = (label) => ((err, data) => { console.log(label, err, data) });
-p = unwrap(logger, p)
+- `tap(syncFn, errdata)`    : Apply a data->*ignored* to a errdata
+- `errtap(syncFn, errdata)` : Apply a err->*ignored*  to a errdata
+- `unwrap(syncFn, errdata)` : Apply a errdata->*ignored* to a errdata
 
 # Maybe later
 
-- (@TODO: explain that it chooses to not handle "native" errors auto-magically ... yet ?)
-  - Or does it ? I've never tested it
+- Handle (or not) "native" errors
 - `H.merge((d1, d2, d3, ...) => {}, p1, p2, p3, ...)` ?
 - `H.rescue` (err -> errdata) ?

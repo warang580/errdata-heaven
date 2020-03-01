@@ -118,6 +118,8 @@ let handleUserUpdate = (user) => {
     H.callback((user, cb) => writeUser('path/to/user', user, cb), p)
   )
 
+  // @TODO: Send an email if email changed
+
   p = H.promise(sendUpdateEmail, p);
 
   return p;
