@@ -1,11 +1,36 @@
-# Callbacks/Promises heaven with [err,data] all the way
+# [err,data] heaven
 
-**Disclaimer** : this project is a work in progress, don't use it yet !
+**Disclaimer** : this project is very young, don't use it in production yet ! Also, my primary language isn't english so feel free to correct anything.
 
-Avoid callback/promises hell by handling data/errors/callbacks/promises, etc.
+This library will simplify all the code handling async stuff like promises or callbacks.
+
+**Say goodbye to callback hell and await hell.**
+
+The idea is simple : Instead of working directly on errors and data as separate things, we work on a thing that's representing both at the same time.
+
+If you have already used NodeJs, you have seen a lot of callbacks like this
+
+```
+fs.readFile('path/to/file', (err, data) => {
+  if (err) {
+    // handle failure
+  }
+
+  // handle file contents
+});
+```
+
+Here you have `err` and `data` as parameters of the callback : `err` contains any error that have occured while we tried to read the file and `data` contains the contents of the file we read. In this library, the concept `errdata` is simply an array that contains both err and data (`[err, data]`) on which we have methods.
+
+The clever twist is this : You generally don't care about data when an error occured. Say you wanted to update a user, whether the error is from the request validation, the database that has crashed, etc. you want to stop processing this data. You don't want to send an email when you didn't load correctly its contents when reading a file. It simplifies a lot the api.
+
+Only one is set, the other is always null
+(it could have been [true, data] but it doesn't work with existing api well and you always have to test what's the meaning of data ; in [err,data] you always know that the data is the 2nd position so you can ignore errors if that's what you want)
+
+
+by handling data/errors/callbacks/promises, etc.
 with an API that creates and transforms `errdata` (= `[err, data]`) promises.
-
-(@TODO: explain that it chooses to not handle "native" errors auto-magically ... yet ?)
+Forget that you're using async/promises
 
 # I already know how to handle Promises ... Why would I need another useless library ? :thinking:
 
@@ -57,7 +82,7 @@ Updating some customer information via a webservice
 
 That's way more complicated **and** ugly.
 
-@TODO: What are we doing now ? (callback hell => promise hell => await everything [tm])
+@TODO: What are we doing now ? (callback hell => promise hell => await(+try/catch + if) everything [tm])
 
 # Another way
 
@@ -99,10 +124,12 @@ define(["require"] , function (require) {
 
 @TODO: Re-use "railway" metaphor
 
+(note: internally ^errdata is a promise that resolves to an errdata ; but the library is meant to be used ignoring this fact)
+
 <method>(fn, ..., ^errdata)
 ("^" means in a promise)
 
-data is always last, so it can be "late-bound" with "pipes"
+data is always in the last argument(s), so it can be "late-bound" with "pipes" (easier for functional programming)
 
 ## Constructors (methods that returns ^errdata, can be used as last argument of other methods
 
@@ -137,5 +164,7 @@ p = unwrap(logger, p)
 
 # Maybe later
 
+- (@TODO: explain that it chooses to not handle "native" errors auto-magically ... yet ?)
+  - Or does it ? I've never tested it
 - `H.merge((d1, d2, d3, ...) => {}, p1, p2, p3, ...)` ?
 - `H.rescue` (err -> errdata) ?

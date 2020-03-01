@@ -104,7 +104,7 @@ let handleUserUpdate = (user) => {
   p = H.guard(guardAdult, p);
   p = H.map(setUpdatedAtToNow, p);
   p = H.unwrap((err, data) => {
-    console.log("user", err, data);
+    console.log("current user", err, data);
   }, p);
   // UpdateUser but keep existing user at merge
   p = H.merge((d1, d2) => ({...d1, saved: d2}), p, H.promise(updateUserDb, p));
@@ -121,16 +121,8 @@ let handleUserUpdate = (user) => {
   return p;
 }
 
-H.unwrap((err, data) => {
-  if (err) {
-    // Do something with error ...
-    console.error("Something bad happened", err);
-    return;
-  }
-
-  // Do something with result
-  // ...
-  console.log("user has been updated", err, data);
+H.tap(data => {
+  console.log("user has been updated", data);
 }, handleUserUpdate({name: "John Doe", email: "john.doe@mail.com", age: 40 }))
 
 console.log("starting updating ...");
