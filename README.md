@@ -55,7 +55,7 @@ async function updateUser(data) {
 
     console.log("user updates", user);
   } catch (err) {
-    // SMTP errors are probably going to be catched here ¯\_(ツ)_/¯
+    // Any potentiel errors captured here
     console.log("An error occured", err);
   }
 }
@@ -160,6 +160,7 @@ In all the functions, errdata is always the last argument
 - `bind(syncFn, errdata)`  : Transform an errdata with a data->errdata fn
 - `guard(syncFn, errdata)` : Transform an errdata with a data->err fn
 - `map(syncFn, errdata)`   : Transform an errdata with a data->data fn
+- `merge(strategy, errdata1, errdata2)` : Transform two errdata into one with a data->data fn
 
 ## Applying side-effects on errdata
 
