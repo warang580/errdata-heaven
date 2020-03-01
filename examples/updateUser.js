@@ -94,6 +94,8 @@ let writeUser = (path, contents, callback) => {
   callback(/* err */ null, /* written */ raw.length, /* string */ raw);
 }
 
+// @TODO: move all functions related to user to another "namespace" so we can focus on "heaven" code
+// @TODO: implement entierely the usecase discussed in README
 let handleUserUpdate = (user) => {
   let p = H.wrap(user);
 

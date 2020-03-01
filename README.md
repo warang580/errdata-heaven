@@ -3,10 +3,88 @@
 **Disclaimer** : this project is very young, don't use it in production yet ! Also, my primary language isn't english so feel free to correct anything.
 
 This library will simplify all the code handling async stuff like promises or callbacks.
-
 **Say goodbye to callback hell and await hell.**
 
-The idea is simple : Instead of working directly on errors and data as separate things, we work on a thing that's representing both at the same time.
+# The problem
+
+I already know how to handle promises and callbacks ... Why would I need another useless library ? :thinking:
+
+When we think about Promises we think generally about something like this :
+
+```
+user.update(data).then(user => {
+  console.log("user", user);
+  // ...
+}).catch(err => {
+  console.error("Something bad happened", err)
+})
+```
+
+or
+
+```
+try {
+  let user = await user.update(data);
+
+  console.log("user", user);
+  // ...
+} catch (err) {
+  console.log("Something bad happened", err);
+}
+```
+
+Simple, right ?
+
+Ok, but in reality, nothing is that simple. The client actually wants to check that the user has a valid email because we will send him a mail after the update is done, but only if his email changed.
+We have to check for SMTP errors too. (let's say that our UI requirement for telling the user about what happened is just console.log or console.error)
+
+```
+async function updateUser(data) {  
+  try {
+    if (! validEmail(data)) {
+      console.error("User e-mail is not valid");
+      return;
+    }
+
+    let currentUser = await user.get(data);
+    let updatedUser = await user.update(data);
+
+    if (currentUser.email != user.email) {
+      await mail.send(user.mail, "...");
+    }
+
+    console.log("user updates", user);
+  } catch (err) {
+    // SMTP errors are probably going to be catched here ¯\_(ツ)_/¯
+    console.log("An error occured", err);
+  }
+}
+```
+
+Not so nice. You can see that more verifications could lead to another level in the nested callback/promise realm.
+Speaking of the devil, let's say our "real" usecase for updating the user is this :
+
+```
+- Incoming request : A user wants to update their data (userid, name, email, age)
+- Check that name, email and age are valid
+ - validation errors ?
+ - maybe checking that we don't have any other user with that new email ?
+- The appropriate user record in a database is updated with the new data
+ - db error ?
+ - user not found ?
+- If the email has changed, send an email to that address
+ - smtp errors ?
+- Send an appropriate response to show the results of the request
+```
+
+How do you handle all that nicely ? That's way more complicated, so it will be uglier, right ?
+Unfortunately, that scenario is really common in data-oriented programs.
+
+The problem is the same whether we're using callbacks, promises (they use callbacks too) or async/await + try/catch everywhere.
+
+# The solution
+
+The idea is simple : Instead of working on errors and data as separate entities, we work on something that's representing both at the same time and that's the thing we pass around in functions.
 
 If you have already used NodeJs, you have seen a lot of callbacks like this
 
@@ -22,76 +100,24 @@ fs.readFile('path/to/file', (err, data) => {
 
 Here you have `err` and `data` as parameters of the callback : `err` contains any error that have occured while we tried to read the file and `data` contains the contents of the file we read. In this library, the concept `errdata` is simply an array that contains both err and data (`[err, data]`) on which we have methods.
 
-The clever twist is this : You generally don't care about data when an error occured. Say you wanted to update a user, whether the error is from the request validation, the database that has crashed, etc. you want to stop processing this data. You don't want to send an email when you didn't load correctly its contents when reading a file. It simplifies a lot the api.
+Only one of err and data is set at a time, the other is always null.
 
-Only one is set, the other is always null
-(it could have been [true, data] but it doesn't work with existing api well and you always have to test what's the meaning of data ; in [err,data] you always know that the data is the 2nd position so you can ignore errors if that's what you want)
+`[err, null]` means an error occured
+`[null, data]` means no error occured
 
-
-by handling data/errors/callbacks/promises, etc.
-with an API that creates and transforms `errdata` (= `[err, data]`) promises.
-Forget that you're using async/promises
-
-# I already know how to handle Promises ... Why would I need another useless library ? :thinking:
-
-When we think about Promises we think generally about simple usecases :
-
-> Given a user.update function that returns a Promise
-
-```
-user.update(data).then(user => {
-    console.log("user", user);
-    // ...
-}).catch(err => {
-    console.error("Something bad happened", err)
-})
-```
-
-or
-
-```
-try {
-    let user = await user.update(data);
-
-    console.log("user", user);
-    // ...
-} catch (err) {
-    console.log("Something bad happened", err);
-}
-```
-
-Simple, right ?
-
-But, let's say our usecase is this (which is really common in data-oriented programs)
-
-```
-Updating some customer information via a webservice
-- Incoming request : A user wants to update their data (userid, name, email, age)
-- Check that name, email and age are valid
-  - validation errors ?
-  - maybe checking that we don't have any other user with that new email ?
-- The appropriate user record in a database is updated with the new data
-  - db error ?
-  - user not found ?
-- If the email has changed, send an email to that address
-  - smtp errors ?
-- Send an appropriate response to show the results of the request
-```
-
-@TODO: code
-
-That's way more complicated **and** ugly.
-
-@TODO: What are we doing now ? (callback hell => promise hell => await(+try/catch + if) everything [tm])
-
-# Another way
+You might say that it doesn't change anything. But the clever twist is this : You generally don't care about data *when an error occured*. Say you wanted to update a user, whether the error is from the request validation that fails, a crash from the database, etc. you want to stop processing data. You don't want to send an email when you didn't load correctly its contents when reading a file. In this library, we handle that behaviour by default which simplifies a lot the code. As a developer, you're just dealing with something that is potentially an error or real data but you don't care until the end.
 
 @TODO: Use "railway" metaphor to illustrate (data = track#1, err = track#2)
+Every time there's an error (because of domain rules or program errors), you're redirected to the "error" track and all the code that is for the "data" track does not apply.
+
+And since we're applying the same concept for promises and callbacks, you can have the same nice syntax API over anything that can be async.
+
+# Ok that seems nice, but can I see some actual code ? I don't really *get* it
 
 ## Examples
 
-- `examples/fetchJoke.js`
-- `examples/updateUser.js`
+- A simple HTTP request : `examples/fetchJoke.js`
+- Full user updated usecase discussed above : `examples/updateUser.js`
 
 # Using it
 
@@ -120,7 +146,7 @@ define(["require"] , function (require) {
 });
 ```
 
-# API
+# Full API explanations
 
 @TODO: Re-use "railway" metaphor
 
@@ -159,8 +185,6 @@ p = unwrap((err,data) => {...}, ^errdata)
 // or for debug
 let logger = (label) => ((err, data) => { console.log(label, err, data) });
 p = unwrap(logger, p)
-
-@TODO: further explanations
 
 # Maybe later
 
