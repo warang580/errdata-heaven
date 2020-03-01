@@ -3,10 +3,19 @@ const F = require("./utils");
 // Quite ironic how "Heaven" wraps hell-ish code
 
 module.exports = {
-  // data => Promise(errdata)
-  wrap: v => Promise.resolve([null, v]),
+  /**
+   * Create errdata from data
+   * @param  {any} data
+   * @return {errdata}
+   */
+  wrap: data => Promise.resolve([null, data]),
 
-  // fn: (data->errdata)
+  /**
+   * Transforms an errdata into another errdata with a data->errdata function
+   * @param  {Function (data->errdata)} fn
+   * @param  {errdata} deferredErrdata
+   * @return {errdata}
+   */
   bind: (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
@@ -18,7 +27,12 @@ module.exports = {
     });
   },
 
-  // fn: (data->data)
+  /**
+   * Transforms an errdata into another errdata with a data->data function
+   * @param  {Function (data->data)} fn
+   * @param  {errdata} deferredErrdata
+   * @return {errdata}
+   */
   map: (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
@@ -31,7 +45,12 @@ module.exports = {
     });
   },
 
-  // fn: (data->data)
+  /**
+   * Transforms an errdata into another errdata with a data->err function
+   * @param  {Function (data->err)} fn
+   * @param  {errdata} deferredErrdata
+   * @return {errdata}
+   */
   guard: (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
@@ -51,7 +70,12 @@ module.exports = {
     });
   },
 
-  // fn: (data->*ignored*)
+  /**
+   * Apply a side-effet to errdata's data
+   * @param  {Function (data->*ignored*)} fn
+   * @param  {errdata} deferredErrdata
+   * @return {errdata} (untouched deferredErrdata)
+   */
   tap: (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
@@ -64,7 +88,12 @@ module.exports = {
     });
   },
 
-  // fn: (err->*ignored*)
+  /**
+   * Apply a side-effet to errdata's err
+   * @param  {Function (err->*ignored*)} fn
+   * @param  {errdata} deferredErrdata
+   * @return {errdata} (untouched deferredErrdata)
+   */
   errtap: (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
@@ -77,7 +106,13 @@ module.exports = {
     });
   },
 
-  // fn: (data->promise(data))
+  /**
+   * Transforms an errdata into another errdata with a data->promise(data) function
+   * Used for existing promises that behaves like : p.then(data).catch(err)
+   * @param  {Function (data->promise(data))} fn
+   * @param  {errdata} deferredErrdata
+   * @return {errdata}
+   */
   promise: (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
@@ -93,8 +128,14 @@ module.exports = {
     });
   },
 
-  // Transform (data, cb(err, data)) into a "errdata promise"
-  // fn: ((data, cb) => { cb(err, data) })
+  /**
+   * Transforms an errdata into another errdata with a (data, (cb(err, ...data)) function
+   * Used for existing callback-based functions that behaves like : later(..., callbackWhenDone)
+   * Most NodeJS async functions are like this
+   * @param  {Function (data->cb(err, ...data))} fn
+   * @param  {errdata} deferredErrdata
+   * @return {errdata}
+   */
   callback: async (fn, deferredErrdata) => {
     return new Promise(resolve => {
       deferredErrdata.then(([err, data]) => {
@@ -109,8 +150,12 @@ module.exports = {
     });
   },
 
-  // @NOTE: not tested, for debug only ... might be useful
-  // transforming into "unwrap"
+  /**
+   * Apply a side-effet to errdata
+   * @param  {Function (errdata->*ignored*)} fn
+   * @param  {errdata} deferredErrdata
+   * @return {errdata} (untouched deferredErrdata)
+   */
   unwrap: (fn, deferredErrdata) => {
     deferredErrdata.then(([err, data]) => {
       fn(err, data);
@@ -121,6 +166,14 @@ module.exports = {
     return deferredErrdata;
   },
 
+  /**
+   * Merges two errdata into one with a merge strategy for data
+   * Errors are handled automatically
+   * @param  {Function (data,data->data)} strategy
+   * @param  {errdata} deferredErrdata1
+   * @param  {errdata} deferredErrdata2
+   * @return {errdata}
+   */
   merge: (strategy, deferredErrdata1, deferredErrdata2) => {
     return new Promise(resolve => {
       deferredErrdata1.then(([err1, data1]) => {
