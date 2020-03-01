@@ -11,7 +11,7 @@ I already know how to handle promises and callbacks ... Why would I need another
 
 When we think about Promises we think generally about something like this :
 
-```
+```js
 user.update(data).then(user => {
   console.log("user", user);
   // ...
@@ -22,7 +22,7 @@ user.update(data).then(user => {
 
 or
 
-```
+```js
 try {
   let user = await user.update(data);
 
@@ -38,7 +38,7 @@ Simple, right ?
 Ok, but in reality, nothing is that simple. The client actually wants to check that the user has a valid email because we will send him a mail after the update is done, but only if his email changed.
 We have to check for SMTP errors too. (let's say that our UI requirement for telling the user about what happened is just console.log or console.error)
 
-```
+```js
 async function updateUser(data) {  
   try {
     if (! validEmail(data)) {
@@ -88,7 +88,7 @@ The idea is simple : Instead of working on errors and data as separate entities,
 
 If you have already used NodeJs, you have seen a lot of callbacks like this
 
-```
+```js
 fs.readFile('path/to/file', (err, data) => {
   if (err) {
     // handle failure
@@ -129,17 +129,17 @@ Yarn : `yarn add errdata-heaven`
 
 ## Usage
 
-```
+```js
 // ES6
 import H from "errdata-heaven";
 ```
 
-```
+```js
 // ES5
 var H = require("errdata-heaven");
 ```
 
-```
+```js
 // Require.js
 define(["require"] , function (require) {
     var H = require("errdata-heaven");
