@@ -128,6 +128,8 @@ Note: `tap` doesn't wait async behaviour, that's a feature, not a bug
 
 ## "Destructors"
 
+- `unwrap(syncFn, ^errdata)` : Apply a errdata->*ignored* to a Promise(Errdata)
+
 // Useful for ending "streams" (instead of await + try/catch)
 p = unwrap((err,data) => {...}, ^errdata)
 // or for debug
@@ -136,14 +138,7 @@ p = unwrap(logger, p)
 
 @TODO: further explanations
 
-# Still open questions
+# Maybe later
 
-- Should you way wait async taps ? can we have async map/bind/guard etc. ?
-
-guard(x => x.success == true ? null : "Email not unique", H.promise(uniqueEmail, user))
-
-- H.merge(mergeDataStrategy, otherSource, currentSource)
-- We need merge strategies for merging 2+ promises ?
-- H.rescue (for err -> errdata) ?
-
-- "merge" dump into "unwrap((err, data) => {...})" (not the same as tap(data))
+- `H.merge((d1, d2, d3, ...) => {}, p1, p2, p3, ...)` ?
+- `H.rescue` (err -> errdata) ?
