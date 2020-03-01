@@ -63,13 +63,10 @@ That's way more complicated **and** ugly.
 
 @TODO: Use "railway" metaphor to illustrate (data = track#1, err = track#2)
 
-## Procedural examples
+## Examples
 
-@TODO
-
-## Functional examples
-
-@TODO
+- `examples/fetchJoke.js`
+- `examples/updateUser.js`
 
 # Using it
 
@@ -105,9 +102,9 @@ define(["require"] , function (require) {
 <method>(fn, ..., ^errdata)
 ("^" means in a promise)
 
-data is always last, so it can be "late-bound"
+data is always last, so it can be "late-bound" with "pipes"
 
-## Constructors (methods that returns ^errdata, can be used as 2nd argument of methods)
+## Constructors (methods that returns ^errdata, can be used as last argument of other methods
 
 - `wrap(value)` : Wraps a simple value into a Promise(Errdata)
 - `promise(syncFnReturningPromise, ^errdata)`  : Transform Promise(value) to Promise(Errdata)
@@ -121,12 +118,12 @@ data is always last, so it can be "late-bound"
 
 - `map(syncFn, ^errdata)`    : Transform an Promise(Errdata) with a data->data fn
 
+## Applying side-effects on ^errdata
+
 - `tap(syncFn, ^errdata)`    : Apply a data->*ignored* to a Promise(Errdata)
 Note: `tap` doesn't wait async behaviour, that's a feature, not a bug
 
 - `errtap(syncFn, ^errdata)` : Apply a err->*ignored*  to a Promise(Errdata)
-
-## "Destructors"
 
 - `unwrap(syncFn, ^errdata)` : Apply a errdata->*ignored* to a Promise(Errdata)
 
