@@ -1,4 +1,5 @@
 const H = require('../src/heaven');
+const U = require('../src/utils');
 
 let checkName = (user) => {
   let name = user.name;
@@ -63,8 +64,11 @@ let updateUserDb = (user) => {
     setTimeout(() => {
       console.log("updated user!");
 
-      // @NOTE: simplify the example by resolving the user directly
-      resolve(user);
+      // @NOTE: We resolve true as in "write successful"
+      // This is for example sake, it would be easier to just resolve(user)
+      // but this library is aimed to support existing code - not to
+      // rewrite everything so it works ; so let's pretend existing code did that
+      resolve(true);
     }, 100)
   });
 };
@@ -96,22 +100,37 @@ let handleUserUpdate = (user) => {
   p = H.bind(checkName, p);
   p = H.bind(checkEmail, p);
   p = H.guard(guardEmailUnique, p);
-  p = H.guard(H.partial(guardMissingField, "age", "Missing user age"), p);
+  p = H.guard(U.partial(guardMissingField, "age", "Missing user age"), p);
   p = H.guard(guardAdult, p);
   p = H.map(setUpdatedAtToNow, p);
-  p = H.promise(updateUserDb, p); // works as-is because updateUserDb returns User :+1:
-  // Write user but don't save output in pipe
-  p = H.dump("before write", p);
-  // @NOTE: tap doesn't wait async behaviour ... bug or feature :thinking:
-  p = H.tap(() => H.callback((user, cb) => writeUser('path/to/user', user, cb), p), p);
-  p = H.dump("after write", p);
+  p = H.unwrap((err, data) => {
+    console.log("user", err, data);
+  }, p);
+  // UpdateUser but keep existing user at merge
+  p = H.merge((d1, d2) => ({...d1, saved: d2}), p, H.promise(updateUserDb, p));
+  // Write user but only keep "write size"
+  p = H.merge((user, write) => ({...user, written: write[0]}),
+    // user
+    p,
+    // Writing user to filesystem
+    H.callback((user, cb) => writeUser('path/to/user', user, cb), p)
+  )
+
   p = H.promise(sendUpdateEmail, p);
 
   return p;
 }
 
-handleUserUpdate({name: "John Doe", email: "john.doe@mail.com", age: 40 }).then(([err, data]) => {
-  console.log("done !", err, data);
-}); // .catch() not needed
+H.unwrap((err, data) => {
+  if (err) {
+    // Do something with error ...
+    console.error("Something bad happened", err);
+    return;
+  }
+
+  // Do something with result
+  // ...
+  console.log("user has been updated", err, data);
+}, handleUserUpdate({name: "John Doe", email: "john.doe@mail.com", age: 40 }))
 
 console.log("starting updating ...");

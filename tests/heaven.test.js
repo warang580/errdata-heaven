@@ -10,6 +10,7 @@ let later = (value, fails = false) => {
         resolve(value);
       }
     }, 1);
+    // ^ This short delays ensure that promise have not the value right away
   })
 }
 
@@ -87,7 +88,7 @@ describe("guard (data->err)", () => {
 
 describe("tap (data->[ignored])", () => {
   test("Promise+(Errdata+)", async () => {
-    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+    let cb = jest.fn().mockImplementation(() => "ignored");
 
     expect(await H.tap(cb, later([null, "value"]))).toEqual([null, "value"]);
 
@@ -96,7 +97,7 @@ describe("tap (data->[ignored])", () => {
   });
 
   test("Promise+(Errdata-)", async () => {
-    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+    let cb = jest.fn().mockImplementation(() => "ignored");
 
     expect(await H.tap(cb, later(["error", null]))).toEqual(["error", null]);
 
@@ -104,7 +105,7 @@ describe("tap (data->[ignored])", () => {
   });
 
   test("Promise-(Errdata)", async () => {
-    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+    let cb = jest.fn().mockImplementation(() => "ignored");
 
     expect(await H.tap(cb, later("failure", true))).toEqual(["failure", null]);
 
@@ -112,9 +113,42 @@ describe("tap (data->[ignored])", () => {
   });
 });
 
+describe("unwrap (errdata->[ignored])", () => {
+  test("Promise+(Errdata+)", async () => {
+    let cb = jest.fn().mockImplementation(() => "ignored");
+
+    expect(await H.unwrap(cb, later([null, "value"]))).toEqual([null, "value"]);
+
+    expect(cb.mock.calls.length).toBe(1);
+    expect(cb.mock.calls[0][0]).toEqual(null);
+    expect(cb.mock.calls[0][1]).toEqual("value");
+  });
+
+  test("Promise+(Errdata-)", async () => {
+    let cb = jest.fn().mockImplementation(() => "ignored");
+
+    expect(await H.unwrap(cb, later(["error", null]))).toEqual(["error", null]);
+
+    expect(cb.mock.calls.length).toBe(1);
+    expect(cb.mock.calls[0][0]).toEqual("error");
+    expect(cb.mock.calls[0][1]).toEqual(null);
+  });
+
+  test("Promise-(Errdata)", done => {
+    let cb = jest.fn().mockImplementation(() => "ignored");
+
+    H.unwrap((err, data) => {
+      expect(err) .toEqual("failure");
+      expect(data).toEqual(null);
+
+      done();
+    }, later("failure", true));
+  });
+});
+
 describe("errtap (err->[ignored])", () => {
   test("Promise+(Errdata+)", async () => {
-    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+    let cb = jest.fn().mockImplementation(() => "ignored");
 
     expect(await H.errtap(cb, later([null, "value"]))).toEqual([null, "value"]);
 
@@ -122,7 +156,7 @@ describe("errtap (err->[ignored])", () => {
   });
 
   test("Promise+(Errdata-)", async () => {
-    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+    let cb = jest.fn().mockImplementation(() => "ignored");
 
     expect(await H.errtap(cb, later(["error", null]))).toEqual(["error", null]);
 
@@ -131,7 +165,7 @@ describe("errtap (err->[ignored])", () => {
   });
 
   test("Promise-(Errdata)", async () => {
-    let cb = jest.fn().mockImplementation(() => "unusedReturn");
+    let cb = jest.fn().mockImplementation(() => "ignored");
 
     expect(await H.errtap(cb, later("failure", true))).toEqual(["failure", null]);
 
@@ -213,27 +247,60 @@ describe("callback ((data, cb)->promise)", () => {
   });
 });
 
-describe("partial", () => {
-  let sum = (x, y) => (x + y);
-
-  test("applies partially arguments", () => {
-    expect(sum(1, 2)).toEqual(3);
-
-    expect(H.partial(sum)(1, 2))  .toEqual(3);
-    expect(H.partial(sum, 1)(2))  .toEqual(3);
-    expect(H.partial(sum, 1, 2)()).toEqual(3);
+describe("merge", () => {
+  test("Merge(Promise+(Errdata1+), Promise+(Errdata2+)) => strategy(d1, d2)", async () => {
+    expect(await H.merge(
+      (d1, d2) => ({d1, d2}),
+      later([null, 1]),
+      later([null, 2])
+    )).toEqual([null, {d1: 1, d2: 2}]);
   });
-});
 
-describe("pipe", () => {
-  let add = (x, y) => (x + y);
-  let mul = (x, y) => (x * y);
+  test("Merge(Promise+(Errdata1+), Promise+(Errdata2-)) => Errdata2-", async () => {
+    expect(await H.merge(
+      (d1, d2) => ({d1, d2}),
+      later([null, 1]),
+      later(["error2", null])
+    )).toEqual(["error2", null]);
+  });
 
-  test("transforms list of [fn, ...args] into one function", () => {
-    expect(H.pipe(
-      [add, 1],
-      [mul, 2],
-      [add, 2],
-    )(1)).toEqual(6);
+  test("Merge(Promise+(Errdata1-), Promise+(Errdata2+)) => Errdata1-", async () => {
+    expect(await H.merge(
+      (d1, d2) => ({d1, d2}),
+      later(["error1", null]),
+      later([null, 2])
+    )).toEqual(["error1", null]);
+  });
+
+  test("Merge(Promise+(Errdata1-), Promise+(Errdata2-)) => Errdata1-", async () => {
+    expect(await H.merge(
+      (d1, d2) => ({d1, d2}),
+      later(["error1", null]),
+      later(["error2", null])
+    )).toEqual(["error1", null]);
+  });
+
+  test("Merge(Promise-(Errdata1), Promise+(Errdata2)) => Errdata1-", async () => {
+    expect(await H.merge(
+      (d1, d2) => ({d1, d2}),
+      later("failure1", true),
+      later(["error2", null])
+    )).toEqual(["failure1", null]);
+  });
+
+  test("Merge(Promise+(Errdata1-), Promise-(Errdata2)) => Errdata1-", async () => {
+    expect(await H.merge(
+      (d1, d2) => ({d1, d2}),
+      later(["error1", null]),
+      later("failure2", true)
+    )).toEqual(["error1", null]);
+  });
+
+  test("Merge(Promise-(Errdata1), Promise-(Errdata2)) => Errdata1-", async () => {
+    expect(await H.merge(
+      (d1, d2) => ({d1, d2}),
+      later("failure1", true),
+      later("failure2", true)
+    )).toEqual(["failure1", null]);
   });
 });

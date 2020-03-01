@@ -116,10 +116,23 @@ data is always last, so it can be "late-bound"
 ## Transforms on ^errdata
 
 - `bind(syncFn, ^errdata)`   : Transform an Promise(Errdata) with a data->errdata fn
+
 - `guard(syncFn, ^errdata)`  : Transform an Promise(Errdata) with a data->err fn
+
 - `map(syncFn, ^errdata)`    : Transform an Promise(Errdata) with a data->data fn
+
 - `tap(syncFn, ^errdata)`    : Apply a data->*ignored* to a Promise(Errdata)
+Note: `tap` doesn't wait async behaviour, that's a feature, not a bug
+
 - `errtap(syncFn, ^errdata)` : Apply a err->*ignored*  to a Promise(Errdata)
+
+## "Destructors"
+
+// Useful for ending "streams" (instead of await + try/catch)
+p = unwrap((err,data) => {...}, ^errdata)
+// or for debug
+let logger = (label) => ((err, data) => { console.log(label, err, data) });
+p = unwrap(logger, p)
 
 @TODO: further explanations
 
@@ -129,5 +142,8 @@ data is always last, so it can be "late-bound"
 
 guard(x => x.success == true ? null : "Email not unique", H.promise(uniqueEmail, user))
 
-- We need merge strategies for merging 2+ promises => H.merge(mergeDataStrategy, [...sources], p)
+- H.merge(mergeDataStrategy, otherSource, currentSource)
+- We need merge strategies for merging 2+ promises ?
 - H.rescue (for err -> errdata) ?
+
+- "merge" dump into "unwrap((err, data) => {...})" (not the same as tap(data))

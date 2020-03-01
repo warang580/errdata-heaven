@@ -1,5 +1,7 @@
 const F = require("./utils");
 
+// Quite ironic how "Heaven" wraps hell-ish code
+
 module.exports = {
   // data => Promise(errdata)
   wrap: v => Promise.resolve([null, v]),
@@ -108,24 +110,34 @@ module.exports = {
   },
 
   // @NOTE: not tested, for debug only ... might be useful
-  dump: (label, deferredErrdata) => {
+  // transforming into "unwrap"
+  unwrap: (fn, deferredErrdata) => {
     deferredErrdata.then(([err, data]) => {
-      console.log(label, [err, data]);
+      fn(err, data);
     }).catch(err => {
-      console.log(label, [err, null]);
+      fn(err, null);
     });
 
     return deferredErrdata;
   },
 
-  // partial application
-  // fn(x,y) == p(fn, x, y)() == p(fn, x)(y) == p(fn)(x, y)
-  partial: F.partial,
+  merge: (strategy, deferredErrdata1, deferredErrdata2) => {
+    return new Promise(resolve => {
+      deferredErrdata1.then(([err1, data1]) => {
+        if (err1 !== null) return resolve([err1, null]);
+        deferredErrdata2.then(([err2, data2]) => {
+          if (err2 !== null) return resolve([err2, null]);
+          return resolve([null, strategy(data1, data2)]);
+        })
+        // @NOTE: .catch(err2) is outside because it can fail before
+        // getting here and it stops everything
+      }).catch(err1 => {
+        return resolve([err1, null]);
+      });
 
-  // pipe([f, 1], [g, true])(x) == g(f(1, x), true) // Note that f applied first
-  pipe: (...fns) => args => {
-    return fns.reduce((val, [fn, ...args]) => {
-      return F.partial(fn, ...args)(val);
-    }, args);
-  }
+      deferredErrdata2.catch(err2 => {
+        return resolve([err2, null]);
+      });
+    });
+  },
 }
