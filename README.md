@@ -3,11 +3,12 @@
 **Disclaimer** : this project is very young, don't use it in production yet ! Also, my primary language isn't english so feel free to correct anything.
 
 This library will simplify all the code handling async stuff like promises or callbacks.
+
 **Say goodbye to callback hell and await hell.**
 
 # The problem
 
-I already know how to handle promises and callbacks ... Why would I need another useless library ? :thinking:
+> I already know how to handle promises and callbacks ... Why would I need another useless library ? :thinking:
 
 When we think about Promises we think generally about something like this :
 
@@ -109,9 +110,9 @@ Every time there's an error (because of domain rules or program errors), you're 
 
 And since we're applying the same concept for promises and callbacks, you can have the same nice syntax API over anything that can be async.
 
-# Ok that seems nice, but can I see some actual code ? I don't really *get* it
+> Ok that seems nice, but can I see some actual code ? I don't really *get* it
 
-## Examples
+# Examples
 
 - [A simple HTTP request](examples/fetchJoke.js)
 - [Full user updated usecase discussed above](examples/updateUser.js)
@@ -161,8 +162,9 @@ In all the functions, errdata is always the last argument
 - `errtap(syncFn, errdata)` : Apply a err->*ignored*  to a errdata
 - `unwrap(syncFn, errdata)` : Apply a errdata->*ignored* to a errdata
 
-# Maybe later
+# TODO (?)
 
 - Handle (or not) "native" errors
+- Handle "basic" errdata (that are not wrapped inside a promise) in all functions
 - `H.merge((d1, d2, d3, ...) => {}, [ed1, ed2, ed3, ...], ed)` ?
 - `H.rescue` (err -> errdata) ?
