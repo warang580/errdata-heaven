@@ -132,15 +132,8 @@ import H from "errdata-heaven";
 ```
 
 ```js
-// ES5
-var H = require("errdata-heaven");
-```
-
-```js
-// Require.js
-define(["require"] , function (require) {
-    var H = require("errdata-heaven");
-});
+// NodeJS
+let H = require("errdata-heaven");
 ```
 
 # Full API explanations
@@ -162,7 +155,7 @@ In all the functions, errdata is always the last argument
 - `map(syncFn, errdata)`   : Transform an errdata with a data->data fn
 - `merge(strategy, errdata1, errdata2)` : Transform two errdata into one with a data->data fn
 
-## Applying side-effects on errdata
+## Applying side-effects with errdata
 
 - `tap(syncFn, errdata)`    : Apply a data->*ignored* to a errdata
 - `errtap(syncFn, errdata)` : Apply a err->*ignored*  to a errdata
@@ -171,5 +164,5 @@ In all the functions, errdata is always the last argument
 # Maybe later
 
 - Handle (or not) "native" errors
-- `H.merge((d1, d2, d3, ...) => {}, p1, p2, p3, ...)` ?
+- `H.merge((d1, d2, d3, ...) => {}, [ed1, ed2, ed3, ...], ed)` ?
 - `H.rescue` (err -> errdata) ?
