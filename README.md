@@ -99,7 +99,7 @@ fs.readFile('path/to/file', (err, data) => {
 });
 ```
 
-Here you have `err` and `data` as parameters of the callback : `err` contains any error that have occured while we tried to read the file and `data` contains the contents of the file we read. In this library, the concept `errdata` is simply an array that contains both err and data (`[err, data]`) on which we have methods.
+Here you have `err` and `data` as parameters of the callback : `err` contains any error that have occured while we tried to read the file and `data` contains the contents of the file we read. In this library, the concept `errdata` is simply an array that contains both err and data (`[err, data]`) on which we have methods. (Well, actually it's a Promise that resolves to [err, data] but you should not care about that, there's `wrap()` to handle that for you)
 
 Only one of err and data is set at a time, the other is always `null`. `[err, null]` means an error occured, `[null, data]` means no error occured.
 
@@ -143,9 +143,10 @@ let H = require("errdata-heaven");
 
 In all the functions, errdata is always the last argument
 
-## Constructors
+## "Constructors"
 
 - `wrap(value)`                              : Wraps a simple value into errdata
+- `errwrap(value)`                           : Wraps an error into errdata
 - `promise(syncFnReturningPromise, errdata)` : Transform data->promise(data) to errdata
 - `callback(syncFnWithCallback, errdata)`    : Transform callback(err, ...data) to errdata
 

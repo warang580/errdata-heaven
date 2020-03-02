@@ -11,6 +11,13 @@ module.exports = {
   wrap: data => Promise.resolve([null, data]),
 
   /**
+   * Create errdata from err
+   * @param  {any} err
+   * @return {errdata}
+   */
+  errwrap: err => Promise.resolve([err, null]),
+
+  /**
    * Transforms an errdata into another errdata with a data->errdata function
    * @param  {Function (data->errdata)} fn
    * @param  {errdata} deferredErrdata

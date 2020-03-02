@@ -20,6 +20,12 @@ describe("wrap", () => {
   });
 });
 
+describe("errwrap", () => {
+  test("err => Promise+(errdata-)", async () => {
+    expect(await H.errwrap("error")).toEqual(["error", null]);
+  });
+});
+
 describe("map (data->data)", () => {
   test("Map(Promise+(Errdata+)) => Errdata+", async () => {
     expect(await H.map(x => (x + 1), later([null, 5]))).toEqual([null, 6]);
