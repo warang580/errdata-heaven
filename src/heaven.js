@@ -1,4 +1,4 @@
-const F = require("./utils");
+const U = require("./utils");
 
 // Quite ironic how "Heaven" wraps hell-ish code
 
@@ -81,7 +81,7 @@ module.exports = {
       deferredErrdata.then(([err, data]) => {
         if (err !== null) return resolve([err, null]);
 
-        resolve([null, F.tap(fn, data)]);
+        resolve([null, U.tap(fn, data)]);
       }).catch(err => {
         resolve([err, null]);
       })
@@ -99,9 +99,9 @@ module.exports = {
       deferredErrdata.then(([err, data]) => {
         if (err === null) return resolve([null, data]);
 
-        resolve([F.tap(fn, err), null]);
+        resolve([U.tap(fn, err), null]);
       }).catch(err => {
-        resolve([F.tap(fn, err), null]);
+        resolve([U.tap(fn, err), null]);
       })
     });
   },
