@@ -1,6 +1,6 @@
 
 // This file is just there to remind how Promises work, and why this library
-// choose to put them everything (because await don't stop anything,
+// choose to put them around everything (because await don't stop anything,
 // expect the current async function) so you might as well handle them
 // everywhere.
 
@@ -19,7 +19,7 @@ let sum = async (x, y) => {
 }
 
 console.log("1 + 2 = ", sum(1, 2));
-// Excepted:
+// Expected:
 // computed 3
 // 1 + 2 = 3
 

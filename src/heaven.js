@@ -21,13 +21,33 @@ class Heaven {
     return this.errdata;
   }
 
-  map(fn) {
+  apply(fn) {
     this.errdata = new Promise(resolve => {
       this.errdata.then(([err, data]) => {
         if (err) {
           resolve([err, null]);
         } else {
           resolve([null, fn(data)]);
+        }
+      })
+    })
+
+    return this;
+  }
+
+  bind(fn) {
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(([err, data]) => {
+        if (err) {
+          resolve([err, null]);
+        } else {
+          let [err2, data2] = fn(data);
+
+          if (err2) {
+            resolve([err2, null]);
+          } else {
+            resolve([null, data2]);
+          }
         }
       })
     })
@@ -59,6 +79,9 @@ class Heaven {
     this.errdata.then(errdata => {
       fn(errdata);
     })
+
+    // @TODO: TDD
+    return this;
   }
 
   assert(fn, error) {
@@ -74,6 +97,10 @@ class Heaven {
         }
       })
     })
+    // @TODO: TDD
+    .catch(err => {
+      resolve([err, null]);
+    });
 
     return this;
   }
@@ -90,6 +117,10 @@ class Heaven {
           resolve([null, data]);
         }
       })
+      // @TODO: TDD
+      .catch(err => {
+        resolve([err, null]);
+      });
     })
 
     return this;
@@ -98,7 +129,7 @@ class Heaven {
   promise(fn) {
     this.errdata = new Promise(resolve => {
       this.errdata.then(([err, data]) => {
-        if (err) resolve([err, null]);
+        if (err) return resolve([err, null]);
         let p = fn(data);
 
         p.then(d => {
@@ -106,7 +137,9 @@ class Heaven {
         }).catch(e => {
           resolve([e, null]);
         });
-      })
+      }).catch(err => {
+        resolve([err, null]);
+      });
     })
 
     return this;
@@ -115,7 +148,7 @@ class Heaven {
   callback(cb) {
     this.errdata = new Promise(resolve => {
       this.errdata.then(([err, data]) => {
-        if (err) resolve([err, null]);
+        if (err) return resolve([err, null]);
         cb(data, (e, ...d) => {
           if (e) {
             resolve([e, null])
@@ -123,7 +156,9 @@ class Heaven {
             resolve([null, d]);
           }
         });
-      })
+      }).catch(err => {
+        console.log("e?", err);
+      });
     })
 
     return this;
@@ -136,25 +171,22 @@ class Heaven {
           return resolve([e1, null]);
         }
 
-        let rec = (datas = []) => {
+        let mergeRecursive = (datas = []) => {
           if (datas.length == errdatas.length) {
             resolve([null, strategy(d1, ...datas)]);
           } else {
             errdatas[datas.length].then(d => {
-              rec(datas.concat(d));
+              mergeRecursive(datas.concat(d));
             });
           }
         }
 
-        rec();
-        errdata.then(d2 => {
-          resolve([null, strategy(d1, d2)])
-        });
+        mergeRecursive();
       });
 
       errdatas.forEach(errdata => {
-        errdata.catch(e2 => {
-          resolve([e2, null])
+        errdata.catch(e => {
+          resolve([e, null])
         })
       });
     })

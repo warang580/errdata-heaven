@@ -1,19 +1,5 @@
 const H = require("../src/heaven");
 
-// Testing deferred values (resolved/rejected)
-let later = (value, fails = false) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (fails) {
-        reject(value);
-      } else {
-        resolve(value);
-      }
-    }, 1);
-    // ^ This short delays ensure that promise have not the value right away
-  })
-}
-
 describe("constructor", () => {
   test("it wraps data in an Heaven object", () => {
     expect(H("data").constructor.name).toEqual("Heaven")
@@ -30,7 +16,6 @@ describe("constructor", () => {
   test("data can be a Promise+", async () => {
     expect(await H(Promise.resolve("data")).unwrap()).toEqual([null, "data"])
   });
-
   test("data can be a Promise-", async () => {
     expect(await H(Promise.reject("error")).unwrap()).toEqual(["error", null])
   });
@@ -42,13 +27,31 @@ describe("unwrap", () => {
   })
 });
 
-describe("map", () => {
+describe("apply", () => {
   test("it transforms data", async () => {
-    expect(await H(5).map(x => x + 1).unwrap()).toEqual([null, 6])
+    expect(await H(5).apply(x => x + 1).unwrap()).toEqual([null, 6])
   })
 
   test("it doesn't transform errors", async () => {
-    expect(await H(null, "error").map(x => x + 1).unwrap()).toEqual(["error", null])
+    expect(await H(null, "error").apply(x => x + 1).unwrap()).toEqual(["error", null])
+  })
+});
+
+describe("bind", () => {
+  test("it transforms data into another data", async () => {
+    expect(await H(5).bind(x => [null, x + 1]).unwrap()).toEqual([null, 6])
+  })
+
+  test("it transforms data into error", async () => {
+    expect(await H(5).bind(x => ["error", null]).unwrap()).toEqual(["error", null])
+  })
+
+  test("it doesn't transform errors", async () => {
+    expect(await H(null, "error").bind(x => [null, x + 1]).unwrap()).toEqual(["error", null])
+  })
+
+  test("it doesn't use another error", async () => {
+    expect(await H(null, "error").bind(x => ["error2", null]).unwrap()).toEqual(["error", null])
   })
 });
 
@@ -124,7 +127,7 @@ describe("guard", () => {
 
 describe("promise", () => {
   test("it does nothing if error", async () => {
-    expect(await H(null, "error").promise(Promise.resolve).unwrap()).toEqual(["error", null])
+    expect(await H(null, "error").promise(x => Promise.resolve(x)).unwrap()).toEqual(["error", null])
   })
 
   test("it handles promise+ on data", async () => {
@@ -133,6 +136,13 @@ describe("promise", () => {
 
   test("it handles promise- on data", async () => {
     expect(await H(5).promise(x => Promise.reject("error")).unwrap()).toEqual(["error", null])
+  })
+
+  test("it handles native errors on data", (done) => {
+    H(5).promise(Promise.reject).catch(err => {
+      expect(err.name).toEqual("TypeError");
+      done();
+    });
   })
 });
 

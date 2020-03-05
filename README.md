@@ -141,8 +141,6 @@ let H = require("errdata-heaven");
 
 @TODO: Re-use "railway" metaphor
 
-In all the functions, errdata is always the last argument
-
 ## "Constructors"
 
 - `wrap(value)`                              : Wraps a simple value into errdata
@@ -169,4 +167,4 @@ In all the functions, errdata is always the last argument
 - Handle "basic" errdata (that are not wrapped inside a promise) in all functions
 - `H.merge((d1, d2, d3, ...) => {}, [ed1, ed2, ed3, ...], ed)` ?
 - `H.rescue` (err -> errdata) ?
-- H.guard(predicate, errorIfTrue) and H.assert(predicate, errorIfFalse) use 
+- H.guard(predicate, errorIfTrue) and H.assert(predicate, errorIfFalse) use
