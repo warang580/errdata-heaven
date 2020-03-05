@@ -1,203 +1,168 @@
-const U = require("./utils");
+class Heaven {
+  constructor(value, err = null) {
+    if (err) {
+      this.errdata = Promise.resolve([err, null]);
+    } else {
+      if (value.constructor.name == "Promise") {
+        this.errdata = new Promise(resolve => {
+          value.then(data => {
+            resolve([null, data]);
+          }).catch(err => {
+            resolve([err, null]);
+          })
+        });
+      } else {
+        this.errdata = Promise.resolve([null, value]);
+      }
+    }
+  }
 
-// Quite ironic how "Heaven" wraps hell-ish code
+  unwrap() {
+    return this.errdata;
+  }
 
-module.exports = {
-  /**
-   * Create errdata from data
-   * @param  {any} data
-   * @return {errdata}
-   */
-  wrap: data => Promise.resolve([null, data]),
-
-  /**
-   * Create errdata from err
-   * @param  {any} err
-   * @return {errdata}
-   */
-  errwrap: err => Promise.resolve([err, null]),
-
-  /**
-   * Transforms an errdata into another errdata with a data->errdata function
-   * @param  {Function (data->errdata)} fn
-   * @param  {errdata} deferredErrdata
-   * @return {errdata}
-   */
-  bind: (fn, deferredErrdata) => {
-    return new Promise(resolve => {
-      deferredErrdata.then(([err, data]) => {
-        if (err !== null) return resolve([err, null]);
-        resolve(fn(data));
-      }).catch(err => {
-        resolve([err, null]);
+  map(fn) {
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(([err, data]) => {
+        if (err) {
+          resolve([err, null]);
+        } else {
+          resolve([null, fn(data)]);
+        }
       })
+    })
+
+    return this;
+  }
+
+  then(fn) {
+    this.errdata.then(([err, data]) => {
+      if (err) return;
+
+      fn(data);
     });
-  },
 
-  /**
-   * Transforms an errdata into another errdata with a data->data function
-   * @param  {Function (data->data)} fn
-   * @param  {errdata} deferredErrdata
-   * @return {errdata}
-   */
-  map: (fn, deferredErrdata) => {
-    return new Promise(resolve => {
-      deferredErrdata.then(([err, data]) => {
-        if (err !== null) return resolve([err, null]);
+    return this;
+  }
 
-        resolve([null, fn(data)]);
-      }).catch(err => {
-        resolve([err, null]);
+  catch(fn) {
+    this.errdata.then(([err, data]) => {
+      if (! err) return;
+
+      fn(err);
+    });
+
+    return this;
+  }
+
+  tap(fn) {
+    this.errdata.then(errdata => {
+      fn(errdata);
+    })
+  }
+
+  assert(fn, error) {
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(([err, data]) => {
+        if (err) resolve([err, null]);
+        let result = fn(data);
+
+        if (! result) {
+          resolve([error, null])
+        } else {
+          resolve([null, data]);
+        }
       })
-    });
-  },
+    })
 
-  /**
-   * Transforms an errdata into another errdata with a data->err function
-   * @param  {Function (data->err)} fn
-   * @param  {errdata} deferredErrdata
-   * @return {errdata}
-   */
-  guard: (fn, deferredErrdata) => {
-    return new Promise(resolve => {
-      deferredErrdata.then(([err, data]) => {
-        if (err !== null) return resolve([err, null]);
-        let err2 = fn(data);
+    return this;
+  }
 
-        if (err2) {
-          resolve([err2, null]);
-          return;
+  guard(fn, error) {
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(([err, data]) => {
+        if (err) resolve([err, null]);
+        let result = fn(data);
+
+        if (result) {
+          resolve([error, null])
+        } else {
+          resolve([null, data]);
+        }
+      })
+    })
+
+    return this;
+  }
+
+  promise(fn) {
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(([err, data]) => {
+        if (err) resolve([err, null]);
+        let p = fn(data);
+
+        p.then(d => {
+          resolve([null, d]);
+        }).catch(e => {
+          resolve([e, null]);
+        });
+      })
+    })
+
+    return this;
+  }
+
+  callback(cb) {
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(([err, data]) => {
+        if (err) resolve([err, null]);
+        cb(data, (e, ...d) => {
+          if (e) {
+            resolve([e, null])
+          } else {
+            resolve([null, d]);
+          }
+        });
+      })
+    })
+
+    return this;
+  }
+
+  merge(strategy, ...errdatas) {
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(([e1, d1]) => {
+        if (e1) {
+          return resolve([e1, null]);
         }
 
-        resolve([null, data]);
-        return;
-      }).catch(err => {
-        resolve([err, null]);
-      });
-    });
-  },
+        let rec = (datas = []) => {
+          if (datas.length == errdatas.length) {
+            resolve([null, strategy(d1, ...datas)]);
+          } else {
+            errdatas[datas.length].then(d => {
+              rec(datas.concat(d));
+            });
+          }
+        }
 
-  /**
-   * Apply a side-effet to errdata's data
-   * @param  {Function (data->*ignored*)} fn
-   * @param  {errdata} deferredErrdata
-   * @return {errdata} (untouched deferredErrdata)
-   */
-  tap: (fn, deferredErrdata) => {
-    return new Promise(resolve => {
-      deferredErrdata.then(([err, data]) => {
-        if (err !== null) return resolve([err, null]);
-
-        resolve([null, U.tap(fn, data)]);
-      }).catch(err => {
-        resolve([err, null]);
-      })
-    });
-  },
-
-  /**
-   * Apply a side-effet to errdata's err
-   * @param  {Function (err->*ignored*)} fn
-   * @param  {errdata} deferredErrdata
-   * @return {errdata} (untouched deferredErrdata)
-   */
-  errtap: (fn, deferredErrdata) => {
-    return new Promise(resolve => {
-      deferredErrdata.then(([err, data]) => {
-        if (err === null) return resolve([null, data]);
-
-        resolve([U.tap(fn, err), null]);
-      }).catch(err => {
-        resolve([U.tap(fn, err), null]);
-      })
-    });
-  },
-
-  /**
-   * Transforms an errdata into another errdata with a data->promise(data) function
-   * Used for existing promises that behaves like : p.then(data).catch(err)
-   * @param  {Function (data->promise(data))} fn
-   * @param  {errdata} deferredErrdata
-   * @return {errdata}
-   */
-  promise: (fn, deferredErrdata) => {
-    return new Promise(resolve => {
-      deferredErrdata.then(([err, data]) => {
-        if (err !== null) return resolve([err, null]);
-        fn(data).then(data => {
-          resolve([null, data]);
-        }).catch(err => {
-          resolve([err, null]);
-        })
-      }).catch(err => {
-        resolve([err, null]);
-      });
-    });
-  },
-
-  /**
-   * Transforms an errdata into another errdata with a (data, (cb(err, ...data)) function
-   * Used for existing callback-based functions that behaves like : later(..., callbackWhenDone)
-   * Most NodeJS async functions are like this
-   * @param  {Function (data->cb(err, ...data))} fn
-   * @param  {errdata} deferredErrdata
-   * @return {errdata}
-   */
-  callback: async (fn, deferredErrdata) => {
-    return new Promise(resolve => {
-      deferredErrdata.then(([err, data]) => {
-        if (err !== null) return resolve([err, null]);
-        fn(data, (err, ...data2) => {
-          if (err !== null) return resolve([err, null]);
-          return resolve([err, data2]);
+        rec();
+        errdata.then(d2 => {
+          resolve([null, strategy(d1, d2)])
         });
-      }).catch(err => {
-        resolve([err, null]);
       });
-    });
-  },
 
-  /**
-   * Apply a side-effet to errdata
-   * @param  {Function (errdata->*ignored*)} fn
-   * @param  {errdata} deferredErrdata
-   * @return {errdata} (untouched deferredErrdata)
-   */
-  unwrap: (fn, deferredErrdata) => {
-    deferredErrdata.then(([err, data]) => {
-      fn(err, data);
-    }).catch(err => {
-      fn(err, null);
-    });
-
-    return deferredErrdata;
-  },
-
-  /**
-   * Merges two errdata into one with a merge strategy for data
-   * Errors are handled automatically
-   * @param  {Function (data,data->data)} strategy
-   * @param  {errdata} deferredErrdata1
-   * @param  {errdata} deferredErrdata2
-   * @return {errdata}
-   */
-  merge: (strategy, deferredErrdata1, deferredErrdata2) => {
-    return new Promise(resolve => {
-      deferredErrdata1.then(([err1, data1]) => {
-        if (err1 !== null) return resolve([err1, null]);
-        deferredErrdata2.then(([err2, data2]) => {
-          if (err2 !== null) return resolve([err2, null]);
-          return resolve([null, strategy(data1, data2)]);
+      errdatas.forEach(errdata => {
+        errdata.catch(e2 => {
+          resolve([e2, null])
         })
-        // @NOTE: .catch(err2) is outside because it can fail before
-        // getting here and it stops everything
-      }).catch(err1 => {
-        return resolve([err1, null]);
       });
+    })
 
-      deferredErrdata2.catch(err2 => {
-        return resolve([err2, null]);
-      });
-    });
-  },
+    return this;
+  }
+}
+
+module.exports = (...args) => {
+  return new Heaven(...args);
 }
