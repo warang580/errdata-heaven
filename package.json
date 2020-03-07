@@ -1,6 +1,6 @@
 {
   "name": "errdata-heaven",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "main": "src/heaven.js",
   "scripts": {
     "test": "jest --colors",
