@@ -7,7 +7,7 @@ function getJoke(jokeUrl) {
   return heaven(jokeUrl)
     .promise(fetchJson)
     .apply(r => r.data.joke)
-    .then(joke => console.log("Joke:", joke));
+    .then(joke => console.log("Joke:", joke))
 }
 
 getJoke("https://icanhazdadjoke.com/");
