@@ -29,6 +29,9 @@ class Heaven {
         } else {
           resolve([null, fn(data)]);
         }
+      })// @TODO: TDD
+      .catch(err => {
+        resolve([err, null]);
       })
     })
 
@@ -50,17 +53,28 @@ class Heaven {
           }
         }
       })
+      // @TODO: TDD
+      .catch(err => {
+        resolve([err, null]);
+      })
     })
 
     return this;
   }
 
   then(fn) {
-    this.errdata.then(([err, data]) => {
-      if (err) return;
-
-      fn(data);
-    });
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(([err, data]) => {
+        if (err) {
+          resolve([err, null]);
+        } else {
+          fn(data);
+          resolve([null, data]);
+        }
+      }).catch(err => {
+        resolve([err, null]);
+      })
+    })
 
     return this;
   }
@@ -70,17 +84,30 @@ class Heaven {
       if (! err) return;
 
       fn(err);
-    });
+    }).catch(err => {
+      // Simply ignore error because we already have
+      // one and errors are not overwritten
+    })
 
     return this;
   }
 
   tap(fn) {
-    this.errdata.then(errdata => {
-      fn(errdata);
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(errdata => {
+        try {
+          fn(errdata);
+          resolve(errdata);
+        } catch (err) {
+          resolve([err, null]);
+        }
+      })
+      // @TODO: TDD
+      .catch(err => {
+        resolve([err, null]);
+      })
     })
 
-    // @TODO: TDD
     return this;
   }
 
@@ -156,9 +183,10 @@ class Heaven {
             resolve([null, d]);
           }
         });
-      }).catch(err => {
-        console.log("e?", err);
-      });
+      })// @TODO: TDD
+      .catch(err => {
+        resolve([err, null]);
+      })
     })
 
     return this;

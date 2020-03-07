@@ -70,6 +70,15 @@ describe("then", () => {
 
     expect(cb.mock.calls.length).toBe(0);
   });
+
+  test("it catches error if fn fails", (done) => {
+    H("data")
+      .then(() => unexistingFn())
+      .catch(err => {
+        expect(err.name).toEqual("ReferenceError");
+        done();
+      });
+  });
 });
 
 describe("catch", () => {
@@ -87,6 +96,15 @@ describe("catch", () => {
 
     expect(cb.mock.calls.length).toBe(0);
   });
+
+  test("it doesn't end if fn fails", (done) => {
+    H(null, "error")
+      .catch(() => unexistingFn())
+      .catch(err => {
+      expect(err).toEqual("error");
+      done();
+    });
+  });
 });
 
 describe("tap", () => {
@@ -102,6 +120,19 @@ describe("tap", () => {
       expect(errdata).toEqual([null, "data"]);
       done();
     });
+  });
+
+  test("it ignores fn return", async () => {
+    expect(await H("data").tap(() => ["bad", "output"]).unwrap()).toEqual([null, "data"]);
+  });
+
+  test("it catches fn errors", (done) => {
+    H("data")
+      .tap(() => unexistingFn())
+      .catch(err => {
+        expect(err.name).toEqual("ReferenceError");
+        done();
+      });
   });
 });
 

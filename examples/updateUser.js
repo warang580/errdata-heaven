@@ -12,15 +12,8 @@ let update = (data) => {
     .guard(User.guardMissingField.bind(null, "age"), "Missing user age")
     .assert(User.isAdult, "You should be an adult")
     .apply(User.setUpdatedAtToNow)
-    // @TODO: try to merge data
-    .then(user => Heaven(user).promise(User.update))
 
-    // @TODO: This doesn't work for some reason
-    // user = user.merge((d1, d2) => {
-    //   console.log("merging", d1, d2);
-    //   return d1;
-    // }, user)
-
+  user = user.merge((user, update) => Object.assign({}, user, {update}), Heaven(user).promise(User.update))
     // @TODO: try to merge data with
     // (user, write) => ({...user, written: write[0]}
     .then(user => Heaven(user).callback((user, cb) => User.write('path/to/user', user, cb)))
