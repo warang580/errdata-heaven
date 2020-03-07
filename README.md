@@ -10,7 +10,7 @@ This library will simplify all the code handling async stuff like promises or ca
 
 ## Using promise results
 
-Note: `User.update(data)` returns a promise with the updated user
+Note: `User.update(data)` returns a promise with an updated user
 
 ```js
 // Async/Await version
@@ -246,4 +246,4 @@ let heaven = require("errdata-heaven");
 
 # TODO (?)
 
-- `fork()` : would be an equivalent of merge(strategy, errdata, bindFn(errdata))
+- `fork(strategy, applyFn)` : would be an equivalent of errdata.merge(strategy, applyFn(data))
