@@ -92,6 +92,24 @@ class Heaven {
     return this;
   }
 
+  rescue(d) {
+    this.errdata = new Promise(resolve => {
+      this.errdata.then(([err, data]) => {
+        if (err) {
+          resolve([null, d]);
+        } else {
+          resolve([null, data]);
+        }
+      })
+      // @TODO: TDD
+      .catch(err => {
+        resolve([null, d]);
+      });
+    })
+
+    return this;
+  }
+
   tap(fn) {
     this.errdata = new Promise(resolve => {
       this.errdata.then(errdata => {
