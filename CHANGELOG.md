@@ -2,6 +2,9 @@
 
 ## [Unreleased](https://github.com/warang580/errdata-heaven/compare/master...develop)
 
+- README examples
+- `rescue(data)` : transforms failing errdata into valid errdata with `data` (useful for default values like [] when a listing fails)
+
 ## [0.2.0](https://github.com/warang580/errdata-heaven/compare/0.1.2...0.2.0) (2020-03-07)
 
 The goal of these changes is to simplify the whole API. These are breaking changes,
