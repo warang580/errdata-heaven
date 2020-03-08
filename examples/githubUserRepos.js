@@ -1,28 +1,89 @@
 const heaven = require('../src/heaven');
 const axios  = require('axios');
 
-let fetchJson = (url) => axios.get(url, {headers: {Accept: "application/vnd.github.v3+json"}})
+let getJson = (url) => axios.get(url, {headers: {Accept: "application/vnd.github.v3+json"}})
 
-let api = "https://api.github.com/users/warang580"
+function promiseVersion() {
+  function userRepositories(username) {
+    let url = "https://api.github.com/users/" + username;
 
-let map = (cb) => (value) => value.map(cb)
+    return new Promise((resolve) => {
+      getJson(url).then(res => {
+        getJson(res.data.repos_url).then(res => {
+          let repos = res.data || [];
 
-heaven(api)
-  // Fetching user
-  .promise(fetchJson)
-  // Getting user repos url
-  .apply(res => res.data.repos_url)
-  // Fetch user repos
-  .promise(fetchJson)
-  // Getting request data
-  .apply(res => res.data)
-  // Transform repo data to only contain specific keys
-  .apply(map(r => {
-    return {
-      name: r.name,
-      description: r.description,
-      url: r.html_url,
-      language: r.language,
-    }}))
-  // We're done, now we can work on our data
-  .then(console.log);
+          resolve(repos.map(r => {
+            return {
+              name: r.name,
+              description: r.description,
+              url: r.html_url,
+              language: r.language,
+            }
+          }))
+        }).catch(err => resolve([]));
+      }).catch(err => resolve([]));
+    });
+  }
+
+  console.time('promise');
+  userRepositories("warang580").then(() => console.timeEnd('promise'));
+}
+
+async function asyncAwaitVersion() {
+  async function userRepositories(username) {
+    let url = "https://api.github.com/users/" + username;
+
+    try {
+      let reposUrl = (await getJson(url)).data.repos_url;
+      let repos    = (await getJson(reposUrl)).data;
+
+      return repos.map(r => {
+        return {
+          name: r.name,
+          description: r.description,
+          url: r.html_url,
+          language: r.language,
+        }
+      })
+    } catch (err) {
+      return [];
+    }
+  }
+
+  console.time('async/await');
+  await userRepositories("warang580");
+  console.timeEnd('async/await');
+}
+
+async function errdataVersion() {
+  function userRepositories(username) {
+    let url = "https://api.github.com/users/" + username;
+
+    return heaven(url)
+    .promise(getJson)
+    .apply(res => res.data.repos_url)
+    .promise(getJson)
+    .apply(res => res.data)
+    .apply(repos => repos.map(r => {
+      return {
+        name: r.name,
+        description: r.description,
+        url: r.html_url,
+        language: r.language,
+      }
+    }))
+    .rescue([])
+  }
+
+  console.time('errdata');
+  userRepositories("warang580").then(() => console.timeEnd('errdata'));
+
+  console.time('errdataAwait');
+  await userRepositories("warang580").unwrap();
+  console.timeEnd('errdataAwait');
+}
+
+// Call all versions with benchmarks
+promiseVersion()
+asyncAwaitVersion()
+errdataVersion()
