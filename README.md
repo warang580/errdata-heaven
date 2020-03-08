@@ -6,6 +6,24 @@ This library will simplify all the code handling async stuff like promises or ca
 
 **Say goodbye to callback hell and await hell.**
 
+# Installation
+
+NPM  : `npm install errdata-heaven`
+
+Yarn : `yarn add errdata-heaven`
+
+# Usage
+
+```js
+// ES6
+import heaven from "errdata-heaven";
+```
+
+```js
+// NodeJS
+let heaven = require("errdata-heaven");
+```
+
 # Examples
 
 ## Using promise results
@@ -63,6 +81,8 @@ let [err, user] = await heaven(User.update(data)).unwrap();
 
 ## Transforming data
 
+Note: `getJson(url)` returns a promise with an http response
+
 For this example, we don't want to do anything when an error happens.
 
 ```js
@@ -91,7 +111,7 @@ getJson(jokeUrl).then(res => {
 ```js
 // Errdata version
 heaven(jokeUrl)
-  .promise(fetchJson)
+  .promise(getJson)
   .apply(r => r.data.today.joke)
   // ^^^ callback will only called if no error happened
   // + any error that might happen in callback is handled as an error that can be catched
@@ -166,6 +186,88 @@ function updateUser(data) {
 let promise = updateUser(data);
 ```
 
+## Combining promises (fetching user's repositories)
+
+For this example, let's say that we want to get user's repositories
+(and return [] if there's any error, but we don't care about what errors happened)
+
+```js
+// Promise version
+function userRepositories(username) {
+  let url = "https://api.github.com/users/" + username;
+
+  return new Promise((resolve) => {
+    getJson(url).then(res => {
+      getJson(res.data.repos_url).then(res => {
+        let repos = res.data || [];
+
+        resolve(repos.map(r => {
+          return {
+            name: r.name,
+            description: r.description,
+            url: r.html_url,
+            language: r.language,
+          }
+        }))
+      }).catch(err => resolve([]));
+    }).catch(err => resolve([]));
+  });
+}
+
+userRepositories("warang580").then(repositories => { /* ... */ })
+```
+
+```js
+// Async/await version
+async function userRepositories(username) {
+  let url = "https://api.github.com/users/" + username;
+
+  try {
+    let reposUrl = (await getJson(url)).data.repos_url;
+    let repos    = (await getJson(reposUrl)).data;
+
+    return repos.map(r => {
+      return {
+        name: r.name,
+        description: r.description,
+        url: r.html_url,
+        language: r.language,
+      }
+    })
+  } catch (err) {
+    return [];
+  }
+}
+
+let repositories = await updateUser(data);
+```
+
+```js
+// Errdata version
+function userRepositories(username) {
+  let url = "https://api.github.com/users/" + username;
+
+  return heaven(url)
+  .promise(getJson)
+  .apply(res => res.data.repos_url)
+  .promise(getJson)
+  .apply(res => res.data)
+  .apply(repos => repos.map(r => {
+    return {
+      name: r.name,
+      description: r.description,
+      url: r.html_url,
+      language: r.language,
+    }
+  }))
+  .rescue([])
+}
+
+let [_, repositories] = await userRepositories("warang580").unwrap();
+// OR
+userRepositories("warang580").then(repositories => { /* ... */ })
+```
+
 # Explanation
 
 The idea is simple : Instead of working on errors and data as separate entities, we work on something that's representing both at the same time and that's the thing we pass around in functions.
@@ -193,26 +295,6 @@ Every time there's an error (because of domain rules or program errors), you're 
 
 And since we're applying the same concept for promises and callbacks, you can have the same nice syntax API over anything that can fail or is async like promises and callbacks.
 
-# Using it
-
-## Installation
-
-NPM  : `npm install errdata-heaven`
-
-Yarn : `yarn add errdata-heaven`
-
-## Usage
-
-```js
-// ES6
-import heaven from "errdata-heaven";
-```
-
-```js
-// NodeJS
-let heaven = require("errdata-heaven");
-```
-
 # Full API explanations
 
 @TODO: Re-use "railway" metaphor
@@ -231,6 +313,7 @@ let heaven = require("errdata-heaven");
 - `.guard(syncFn, errdata)` : Transform errdata with a data->err fn
 - `.apply(syncFn, errdata)` : Transform errdata with a data->data fn
 - `.merge(strategy, errdata1, errdata2, ...)` : Merge current errdata with multiple errdatas using a [data]->data fn
+- `.rescue(data)` : transforms failing errdata into valid errdata with `data`
 
 ## Applying side-effects to errdata
 
@@ -242,8 +325,9 @@ let heaven = require("errdata-heaven");
 
 - [A simple HTTP request](examples/fetchJoke.js)
 - [Multiple requests](examples/githubUserRepos.js)
-- [Full user updated usecase discussed above](examples/updateUser.js)
+- [Update a user](examples/updateUser.js)
 
 # TODO (?)
 
 - `fork(strategy, applyFn)` : would be an equivalent of errdata.merge(strategy, applyFn(data))
+- `unwrap(defaultData)` : returns a promise with defaultData as data when there's an error so you don't have errors related to null afterwards but you can still check for errors
