@@ -1,8 +1,15 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/warang680/errdata-heaven/compare/master...develop)
+## [Unreleased](https://github.com/warang580/errdata-heaven/compare/master...develop)
 
-## [0.2.0](https://github.com/warang680/errdata-heaven/compare/0.1.2...0.2.0) (2020-03-07)
+## [0.3.0](https://github.com/warang580/errdata-heaven/compare/0.2.0...0.3.0) (2020-03-08)
+
+- README examples
+- `rescue(data)` : transforms failing errdata into valid errdata with `data` (useful for default values like [] when a listing fails)
+
+## 0.2.0 (2020-03-07)
+
+This is the first released version that follows GitFlow convention.
 
 The goal of these changes is to simplify the whole API. These are breaking changes,
 but I don't want to call this a 1.0.0 so here we are with a 0.2.0 version.

@@ -27,6 +27,16 @@ describe("unwrap", () => {
   })
 });
 
+describe("rescue", () => {
+  test("it does nothing to data", async () => {
+    expect(await H(5).rescue("ok").unwrap()).toEqual([null, 5])
+  })
+
+  test("it transforms err into data", async () => {
+    expect(await H(null, "error").rescue("ok").unwrap()).toEqual([null, "ok"])
+  })
+});
+
 describe("apply", () => {
   test("it transforms data", async () => {
     expect(await H(5).apply(x => x + 1).unwrap()).toEqual([null, 6])
